@@ -9,7 +9,8 @@ packages <- c(
 	'optparse',
 	'plyr',
 	'plotly',
-	'htmlwidgets'
+	'htmlwidgets',
+	'wesanderson'
 )
 
 # Install packages not yet installed
@@ -41,6 +42,8 @@ df$duration = df$end - df$start
 
 df$label = paste0('Rank: ', df$rank, '\nOperation: ', df$operation, '\nDuration: ', round(df$duration, digits = 3), ' seconds\nSize: ', (df$size / 1024), ' KB')
 
+palette <- wes_palette('Zissou1', 100, type = 'continuous')
+
 maximum = max(df$end) + (max(df$end) * 0.01)
 
 plot_posix <- ggplot(
@@ -50,12 +53,16 @@ plot_posix <- ggplot(
 		xend = end,
 		y = rank,
 		yend = rank,
-		color = operation,
+		color = size,
 		text = label
 	)) +
 	geom_segment() +
 	scale_x_continuous(breaks = seq(0, maximum, length.out = 10)) +
 	facet_grid(api ~ .) +
+	scale_color_gradientn(
+		'Request size\n(bytes)',
+		colours = palette
+	) +  
 	expand_limits(x = 0) +
 	xlab('Time') +
 	ylab('Rank #') +
@@ -73,12 +80,16 @@ plot_mpiio <- ggplot(
 		xend = end,
 		y = rank,
 		yend = rank,
-		color = operation,
+		color = size,
 		text = label
 	)) +
 	geom_segment() +
 	scale_x_continuous(breaks = seq(0, maximum, length.out = 10)) +
 	facet_grid(api ~ .) +
+	scale_color_gradientn(
+		'Request size\n(bytes)',
+		colours = palette
+	) +  
 	expand_limits(x = 0) +
 	xlab('Time') +
 	ylab('Rank #') +
@@ -94,7 +105,8 @@ p_posix <- ggplotly(
 		width = 1800,
 		height = 1000,
 		tooltip = "text",
-		legendgroup = operation
+		legendgroup = operation,
+		dynamicTicks = TRUE
 	) %>%
 	layout(
 		margin = list(pad = 0),
@@ -110,9 +122,10 @@ p_mpiio <- ggplotly(
 		width = 1800,
 		height = 1000,
 		tooltip = "text",
-		legendgroup = operation
+		legendgroup = operation,
+		dynamicTicks = TRUE
 	) %>%
-	rangeslider(min(df$start), max(df$end), thickness = 0.05) %>%
+	rangeslider(0, maximum, thickness = 0.05) %>%
 	layout(
 		margin = list(pad = 0),
 		yaxis = list(fixedrange = FALSE),
@@ -128,4 +141,4 @@ p_mpiio <- ggplotly(
 
 p <- subplot(p_posix, p_mpiio, nrows = 2)
 
-saveWidget(p, selfcontained = FALSE, 'explore.html')
+saveWidget(p, selfcontained = FALSE, 'explore-transfer.html')

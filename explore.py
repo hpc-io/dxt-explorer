@@ -27,8 +27,10 @@ def main(arguments):
     parser.add_argument('darshan', help="Input .darshan file")
     parser.add_argument('-o', '--outfile', help="Output file",
                         default=sys.stdout, type=argparse.FileType('w'))
-    parser.add_argument('-i', '--interactive', help="Generate and interactive visualization",
-                        default=False)
+    parser.add_argument('-t', '--transfer', help="Generate an interactive transfer explorer",
+                        default=False, action='store_true')
+    parser.add_argument('-s', '--spacial', help="Generate an interactive spatiality explorer",
+                        default=False, action='store_true')
 
     args = parser.parse_args(arguments)
 
@@ -39,8 +41,11 @@ def main(arguments):
     parse(args.darshan)
     generate_plot(args.darshan)
 
-    if args.interactive:
-        generate_interactive_plot(args.darshan)
+    if args.transfer:
+        generate_transfer_plot(args.darshan)
+
+    if args.spacial:
+        generate_spacial_plot(args.darshan)
 
 
 def has_dxt_parser():
@@ -118,7 +123,25 @@ def parse(file):
                     ])
 
                 if 'X_MPIIO' in line:
-                    (api, rank, operation, segment, offset, size, start, end) = line.split()
+                    info = line.split()
+
+                    api = info[0]
+                    rank = info[1]
+                    operation = info[2]
+
+                    # Newer Darshan DXT logs have segment for MPI-IO
+                    if len(info) == 8:
+                        segment = info[3]
+                        offset = info[4]
+                        size = info[5]
+                        start = info[6]
+                        end = info[7]
+                    else:
+                        segment = -1;
+                        offset = info[3]
+                        size = info[4]
+                        start = info[5]
+                        end = info[6]
 
                     w.writerow([
                         file_id,
@@ -135,6 +158,24 @@ def parse(file):
 
 def generate_plot(file):
     command = './plot.R -f {0}.dxt.csv'.format(file)
+
+    args = shlex.split(command)
+
+    s = subprocess.run(args, stderr=subprocess.PIPE, stdout=subprocess.PIPE)
+
+    assert(s.returncode == 0)
+
+def generate_transfer_plot(file):
+    command = './plot-transfer.R -f {0}.dxt.csv'.format(file)
+
+    args = shlex.split(command)
+
+    s = subprocess.run(args, stderr=subprocess.PIPE, stdout=subprocess.PIPE)
+
+    assert(s.returncode == 0)
+
+def generate_spacial_plot(file):
+    command = './plot-spatiality.R -f {0}.dxt.csv'.format(file)
 
     args = shlex.split(command)
 
