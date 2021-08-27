@@ -1,4 +1,4 @@
-#!/usr/bin/env python3
+#!/usr/bin/python3
 
 """
 Explore DXT parser.
@@ -10,6 +10,8 @@ import csv
 import shlex
 import argparse
 import subprocess
+import logging
+import logging.handlers
 
 import pandas as pd
 
@@ -17,172 +19,240 @@ from plotnine import *
 from distutils.spawn import find_executable
 
 
-def main(arguments):
+class Explorer:
 
-    parser = argparse.ArgumentParser(
-        description=__doc__,
-        formatter_class=argparse.RawDescriptionHelpFormatter
-    )
+    def __init__(self, args):
+        """Initialize the explorer."""
+        self.configure_log()
+        self.has_dxt_parser()
 
-    parser.add_argument('darshan', help="Input .darshan file")
-    parser.add_argument('-o', '--outfile', help="Output file",
-                        default=sys.stdout, type=argparse.FileType('w'))
-    parser.add_argument('-t', '--transfer', help="Generate an interactive transfer explorer",
-                        default=False, action='store_true')
-    parser.add_argument('-s', '--spacial', help="Generate an interactive spatiality explorer",
-                        default=False, action='store_true')
+        self.args = args
 
-    args = parser.parse_args(arguments)
+    def configure_log(self):
+        """Configure the logging system."""
+        self.logger = logging.getLogger('DXT Explorer')
+        self.logger.setLevel(logging.DEBUG)
 
-    if not os.path.exists(args.darshan):
-        print('ERROR')
-        exit()
+        # Defines the format of the logger
+        formatter = logging.Formatter('%(asctime)s %(module)s - %(levelname)s - %(message)s')
 
-    parse(args.darshan)
-    generate_plot(args.darshan)
+        console = logging.StreamHandler()
+        
+        console.setFormatter(formatter)
 
-    if args.transfer:
-        generate_transfer_plot(args.darshan)
+        self.logger.addHandler(console)
 
-    if args.spacial:
-        generate_spacial_plot(args.darshan)
+    def run(self):
+        self.is_darshan_file(self.args.darshan)
 
+        self.parse(self.args.darshan)
+        self.generate_plot(self.args.darshan)
 
-def has_dxt_parser():
-    """Check whether `darshan-dxt-parser` is on PATH."""
+        if self.args.transfer:
+            self.generate_transfer_plot(self.args.darshan)
 
-    return find_executable('darshan-dxt-parser') is not None
-
-
-def dxt(file):
-    """Parse the Darshan file to generate the .dxt trace file."""
-
-    assert(has_dxt_parser() == True)
-
-    # Generate the DXT file
-    command = 'darshan-dxt-parser {0}'.format(file)
-
-    args = shlex.split(command)
-
-    with open('{}.dxt'.format(file), 'w') as output:
-        s = subprocess.run(args, stderr=subprocess.PIPE, stdout=output)
-
-    assert(s.returncode == 0)
+        if self.args.spatiality:
+            self.generate_spatiality_plot(self.args.darshan)
 
 
-def parse(file):
-    dxt(file)
+    def is_darshan_file(self, file):
+        """Check if the provided file exists and is a .darshan file."""
+        if not os.path.exists(self.args.darshan):
+            self.logger.error('{}: NOT FOUND'.format(file))
 
-    with open(file + '.dxt') as f:
-        lines = f.readlines()
-        file_id = None
-        file_name = None
+            exit(-1)
 
-        with open(file + '.dxt.csv', 'w', newline='') as csvfile:
-            w = csv.writer(csvfile)
+        if not self.args.darshan.endswith('.darshan'):
+            self.logger.error('{} is not a .darshan file'.format(file))
 
-            w.writerow([
-                'file_id',
-                'api',
-                'rank',
-                'operation',
-                'segment',
-                'offset',
-                'size',
-                'start',
-                'end'
-            ])
+            exit(-1)
 
-            for line in lines:
-                if 'file_id' in line:
-                    file_id = line.split(',')[1].split(':')[1].strip()
-                    file_name = line.split(',')[2].split(':')[1].strip()
 
-                if 'X_POSIX' in line:
-                    info = line.replace('[', '').replace(']', '').split()
+    def has_dxt_parser(self):
+        """Check if `darshan-dxt-parser` is on PATH."""
+        if find_executable('darshan-dxt-parser') is not None:
+            self.logger.info('darshan-dxt-parser: FOUND')
+        else:
+            self.logger.error('darshan-dxt-parser: NOT FOUND')
 
-                    api = info[0]
-                    rank = info[1]
-                    operation = info[2]
-                    segment = info[3]
-                    offset = info[4]
-                    size = info[5]
-                    start = info[6]
-                    end = info[7]
+            exit(-1)
 
-                    w.writerow([
-                        file_id,
-                        api.replace('X_', ''),
-                        rank,
-                        operation,
-                        segment,
-                        offset,
-                        size,
-                        start,
-                        end
-                    ])
+    def dxt(self, file):
+        """Parse the Darshan file to generate the .dxt trace file."""
+        command = 'darshan-dxt-parser {0}'.format(file)
 
-                if 'X_MPIIO' in line:
-                    info = line.split()
+        args = shlex.split(command)
 
-                    api = info[0]
-                    rank = info[1]
-                    operation = info[2]
+        self.logger.info('parsing {} file'.format(file))
 
-                    # Newer Darshan DXT logs have segment for MPI-IO
-                    if len(info) == 8:
+        with open('{}.dxt'.format(file), 'w') as output:
+            s = subprocess.run(args, stderr=subprocess.PIPE, stdout=output)
+
+        assert(s.returncode == 0)
+
+
+    def parse(self, file):
+        """Parse the .darshan.dxt file to generate a CSV file."""
+        self.dxt(file)
+
+        self.logger.info('generating an intermediate CSV file')
+
+        with open(file + '.dxt') as f:
+            lines = f.readlines()
+            file_id = None
+            file_name = None
+
+            with open(file + '.dxt.csv', 'w', newline='') as csvfile:
+                w = csv.writer(csvfile)
+
+                w.writerow([
+                    'file_id',
+                    'api',
+                    'rank',
+                    'operation',
+                    'segment',
+                    'offset',
+                    'size',
+                    'start',
+                    'end'
+                ])
+
+                for line in lines:
+                    if 'file_id' in line:
+                        file_id = line.split(',')[1].split(':')[1].strip()
+                        file_name = line.split(',')[2].split(':')[1].strip()
+
+                    if 'X_POSIX' in line:
+                        info = line.replace('[', '').replace(']', '').split()
+
+                        api = info[0]
+                        rank = info[1]
+                        operation = info[2]
                         segment = info[3]
                         offset = info[4]
                         size = info[5]
                         start = info[6]
                         end = info[7]
-                    else:
-                        segment = -1;
-                        offset = info[3]
-                        size = info[4]
-                        start = info[5]
-                        end = info[6]
 
-                    w.writerow([
-                        file_id,
-                        api.replace('X_', ''),
-                        rank,
-                        operation,
-                        segment,
-                        offset,
-                        size,
-                        start,
-                        end
-                    ])
+                        w.writerow([
+                            file_id,
+                            api.replace('X_', ''),
+                            rank,
+                            operation,
+                            segment,
+                            offset,
+                            size,
+                            start,
+                            end
+                        ])
+
+                    if 'X_MPIIO' in line:
+                        info = line.split()
+
+                        api = info[0]
+                        rank = info[1]
+                        operation = info[2]
+
+                        # Newer Darshan DXT logs have segment for MPI-IO
+                        if len(info) == 8:
+                            segment = info[3]
+                            offset = info[4]
+                            size = info[5]
+                            start = info[6]
+                            end = info[7]
+                        else:
+                            segment = -1;
+                            offset = info[3]
+                            size = info[4]
+                            start = info[5]
+                            end = info[6]
+
+                        w.writerow([
+                            file_id,
+                            api.replace('X_', ''),
+                            rank,
+                            operation,
+                            segment,
+                            offset,
+                            size,
+                            start,
+                            end
+                        ])
 
 
-def generate_plot(file):
-    command = './plot.R -f {0}.dxt.csv'.format(file)
+    def generate_plot(self, file):
+        """Generate an interactive operation plot."""
+        command = 'plots/operation.R -f {0}.dxt.csv'.format(file)
 
-    args = shlex.split(command)
+        args = shlex.split(command)
 
-    s = subprocess.run(args, stderr=subprocess.PIPE, stdout=subprocess.PIPE)
+        self.logger.info('generating interactive operation plot')
 
-    assert(s.returncode == 0)
+        s = subprocess.run(args, stderr=subprocess.PIPE, stdout=subprocess.PIPE)
 
-def generate_transfer_plot(file):
-    command = './plot-transfer.R -f {0}.dxt.csv'.format(file)
+        assert(s.returncode == 0)
 
-    args = shlex.split(command)
+    def generate_transfer_plot(self, file):
+        """Generate an interactive transfer plot."""
+        command = 'plots/transfer.R -f {0}.dxt.csv'.format(file)
 
-    s = subprocess.run(args, stderr=subprocess.PIPE, stdout=subprocess.PIPE)
+        args = shlex.split(command)
 
-    assert(s.returncode == 0)
+        self.logger.info('generating interactive transfer plot')
 
-def generate_spacial_plot(file):
-    command = './plot-spatiality.R -f {0}.dxt.csv'.format(file)
+        s = subprocess.run(args, stderr=subprocess.PIPE, stdout=subprocess.PIPE)
 
-    args = shlex.split(command)
+        assert(s.returncode == 0)
 
-    s = subprocess.run(args, stderr=subprocess.PIPE, stdout=subprocess.PIPE)
+    def generate_spatiality_plot(self, file):
+        """Generate an interactive spatiality plot."""
+        command = 'plots/spatiality.R -f {0}.dxt.csv'.format(file)
 
-    assert(s.returncode == 0)
+        args = shlex.split(command)
+
+        self.logger.info('generating interactive spatiality plot')
+
+        s = subprocess.run(args, stderr=subprocess.PIPE, stdout=subprocess.PIPE)
+
+        assert(s.returncode == 0)
 
 
-if __name__ == '__main__':
-    sys.exit(main(sys.argv[1:]))
+
+PARSER = argparse.ArgumentParser(
+    description='DXT Explorer: '
+)
+
+PARSER.add_argument(
+    'darshan', 
+    help='Input .darshan file'
+)
+
+PARSER.add_argument(
+    '-o',
+    '--output',
+    default=sys.stdout,
+    type=argparse.FileType('w'),
+    help='Name of the output file'
+)
+
+PARSER.add_argument(
+    '-t',
+    '--transfer',
+    default=False,
+    action='store_true',
+    help='Generate an interactive data transfer explorer'
+)
+
+PARSER.add_argument(
+    '-s',
+    '--spatiality',
+    default=False,
+    action='store_true',
+    help='Generate an interactive spatiality explorer'
+)
+
+
+ARGS = PARSER.parse_args()
+
+EXPLORE = Explorer(ARGS)
+EXPLORE.run()

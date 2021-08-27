@@ -39,7 +39,13 @@ df <- read.csv(file=opt$file, sep = ',')
 
 df$duration = df$end - df$start
 
-df$label = paste0('Rank: ', df$rank, '\nOperation: ', df$operation, '\nDuration: ', round(df$duration, digits = 3), ' seconds\nSize: ', (df$size / 1024), ' KB')
+df$label = paste0(
+	'Rank: ', df$rank, '\n',
+	'Operation: ', df$operation, '\n',
+	'Duration: ', round(df$duration, digits = 3), ' seconds\n',
+	'Size: ', (df$size / 1024), ' KB\n',
+	'Offset: ', df$offset
+)
 
 maximum = max(df$end) + (max(df$end) * 0.01)
 
@@ -54,6 +60,13 @@ plot_posix <- ggplot(
 		text = label
 	)) +
 	geom_segment() +
+	scale_color_manual(
+		"",
+		values = c(
+			"#f0746e",
+			"#3c93c2"
+		)
+	) +
 	scale_x_continuous(breaks = seq(0, maximum, length.out = 10)) +
 	facet_grid(api ~ .) +
 	expand_limits(x = 0) +
@@ -77,6 +90,13 @@ plot_mpiio <- ggplot(
 		text = label
 	)) +
 	geom_segment() +
+	scale_color_manual(
+		"",
+		values = c(
+			"#f0746e",
+			"#3c93c2"
+		)
+	) +
 	scale_x_continuous(breaks = seq(0, maximum, length.out = 10)) +
 	facet_grid(api ~ .) +
 	expand_limits(x = 0) +
