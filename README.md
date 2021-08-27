@@ -15,14 +15,26 @@ python3 explore.py DARSHAN_FILE_COLLECTED_WITH_DXT_ENABLE.darshan
 ```
 
 ```bash
-usage: explore.py [-h] [-o OUTFILE] [-t] [-s] darshan
+usage: explore.py [-h] [-o OUTPUT] [-t] [-s] darshan
+
+DXT Explorer:
+
+positional arguments:
+  darshan               Input .darshan file
+
+optional arguments:
+  -h, --help            show this help message and exit
+  -o OUTPUT, --output OUTPUT
+                        Name of the output file
+  -t, --transfer        Generate an interactive data transfer explorer
+  -s, --spatiality      Generate an interactive spatiality explorer
 ```
 
-It will generate a `explore.html` file with an interactive plot that you can open in any browser to explore.
+DXT Explorer will generate by default a `explore.html` file with an interactive plot that you can open in any browser to explore. If you enabled the transfer or spatility plots, additional `.html` files will be generated, one for each type.
 
 ---
 
-DXT Explorer Copyright (c) 2021, The Regents of the University ofCalifornia, through Lawrence Berkeley National Laboratory (subject to receipt of any required approvals from the U.S. Dept. of Energy). All rights reserved.
+DXT Explorer Copyright (c) 2021, The Regents of the University of California, through Lawrence Berkeley National Laboratory (subject to receipt of any required approvals from the U.S. Dept. of Energy). All rights reserved.
 
 If you have questions about your rights to use or distribute this software, please contact Berkeley Lab's Intellectual Property Office at IPO@lbl.gov.
 
