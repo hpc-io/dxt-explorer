@@ -215,7 +215,21 @@ class Explorer:
 
         s = subprocess.run(args, stderr=subprocess.PIPE, stdout=subprocess.PIPE)
 
-        assert(s.returncode == 0)
+        if s.returncode == 0:
+            self.logger.info('SUCCESS')
+        else:
+            self.logger.error('Failed to generate the interactive plots (error %s)', s.returncode)
+
+            if s.stdout is not None:
+                for item in s.stdout.decode().split('\n'):
+                    if item.strip() != '':
+                        self.logger.debug(item)
+
+            if s.stderr is not None:
+                for item in s.stderr.decode().split('\n'):
+                    if item.strip() != '':
+                        self.logger.error(item)
+
 
     def generate_transfer_plot(self, file):
         """Generate an interactive transfer plot."""
@@ -227,7 +241,21 @@ class Explorer:
 
         s = subprocess.run(args, stderr=subprocess.PIPE, stdout=subprocess.PIPE)
 
-        assert(s.returncode == 0)
+        if s.returncode == 0:
+            self.logger.info('SUCCESS')
+        else:
+            self.logger.error('Failed to generate the interactive plots (error %s)', s.returncode)
+
+            if s.stdout is not None:
+                for item in s.stdout.decode().split('\n'):
+                    if item.strip() != '':
+                        self.logger.debug(item)
+
+            if s.stderr is not None:
+                for item in s.stderr.decode().split('\n'):
+                    if item.strip() != '':
+                        self.logger.error(item)
+
 
     def generate_spatiality_plot(self, file):
         """Generate an interactive spatiality plot."""
@@ -239,7 +267,20 @@ class Explorer:
 
         s = subprocess.run(args, stderr=subprocess.PIPE, stdout=subprocess.PIPE)
 
-        assert(s.returncode == 0)
+        if s.returncode == 0:
+            self.logger.info('SUCCESS')
+        else:
+            self.logger.error('Failed to generate the interactive plots (error %s)', s.returncode)
+
+            if s.stdout is not None:
+                for item in s.stdout.decode().split('\n'):
+                    if item.strip() != '':
+                        self.logger.debug(item)
+
+            if s.stderr is not None:
+                for item in s.stderr.decode().split('\n'):
+                    if item.strip() != '':
+                        self.logger.error(item)
 
 
 

@@ -16,8 +16,6 @@
 # Software to reproduce, distribute copies to the public, prepare derivative 
 # works, and perform publicly and display publicly, and to permit others to do so.
 
-options(warn = -1)
-
 packages <- c(
 	'ggplot2',
 	'optparse',
