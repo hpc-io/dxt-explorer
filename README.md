@@ -1,10 +1,12 @@
 ![DXT Explorer Logo](dxt-explorer.png)
 
-You need to have Python 3 and install some required libraries:
+You need to have Python 3 and R already installed in your system, and install some required Python libraries:
 
 ```bash
 pip install -r requirements.txt
 ```
+
+In the first execution ever, DXT Explorer will automatically download any missing R packages required, thus it might take longer to generate the plot.
 
 You also need to have Darshan Utils installed (`darshan-dxt-parser`) and available in your path.
 

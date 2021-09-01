@@ -41,6 +41,7 @@ class Explorer:
         """Initialize the explorer."""
         self.configure_log()
         self.has_dxt_parser()
+        self.has_r_support()
 
         self.args = args
 
@@ -83,13 +84,21 @@ class Explorer:
 
             exit(-1)
 
-
     def has_dxt_parser(self):
         """Check if `darshan-dxt-parser` is on PATH."""
         if find_executable('darshan-dxt-parser') is not None:
             self.logger.info('darshan-dxt-parser: FOUND')
         else:
             self.logger.error('darshan-dxt-parser: NOT FOUND')
+
+            exit(-1)
+
+    def has_r_support(self):
+        """Check if `Rscript` is on PATH."""
+        if find_executable('Rscript') is not None:
+            self.logger.info('Rscript: FOUND')
+        else:
+            self.logger.error('Rscript: NOT FOUND')
 
             exit(-1)
 
