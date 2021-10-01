@@ -1,4 +1,7 @@
-![DXT Explorer Logo](dxt-explorer.png)
+<p align="center">
+  <img src="https://github.com/hpc-io/dxt-explorer/raw/main/dxt-explorer.png" alt="DXT Explorer"/>
+</p>
+
 
 The Darshan eXtended Tracing (DXT) support is disabled by default in Darshan. To enable tracing globally for all files, you need to set the `DXT_ENABLE_IO_TRACE ` environment variable as follows:
 
