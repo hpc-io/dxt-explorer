@@ -50,6 +50,8 @@ optional arguments:
 
 DXT Explorer will generate by default a `explore.html` file with an interactive plot that you can open in any browser to explore. If you enabled the transfer or spatility plots, additional `.html` files will be generated, one for each type.
 
+You can find a couple of interactive examples of DXT traces collected from FLASH, E2E, and OpenPMD in the [companion repository](https://jeanbez.gitlab.io/pdsw-2021) for our PDSW'21 paper.
+
 ### Docker Image
 
 You can also use a Docker image already pre-configured with all dependencies to run DXT Explorer:
@@ -75,6 +77,18 @@ docker run --rm --mount \
 2021-10-05 03:21:54,657 explore - INFO - SUCCESS
 ```
 
+### Citation
+
+You can find more information about DXT Explorer in our PDSW'21 paper. If you use DXT in your experiments, please consider citing:
+
+```
+@inproceedings{dxt-explorer,
+  title = {{I/O Bottleneck Detection and Tuning: Connecting the Dots using Interactive Log Analysis}},
+  author = {Bez, Jean Luca and Tang, Houjun and Xie, Bing, and Williams-Young, David and Latham, Rob and Ross, Rob and Oral, Sarp and Byna, Suren},
+  booktitle = {2021 IEEE/ACM 6th International Parallel Data Systems Workshop (PDSW)}
+  year = {2021}
+}
+```
 ---
 
 DXT Explorer Copyright (c) 2021, The Regents of the University of California, through Lawrence Berkeley National Laboratory (subject to receipt of any required approvals from the U.S. Dept. of Energy). All rights reserved.
