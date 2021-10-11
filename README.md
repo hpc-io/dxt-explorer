@@ -57,7 +57,7 @@ You can find a couple of interactive examples of DXT traces collected from FLASH
 You can also use a Docker image already pre-configured with all dependencies to run DXT Explorer:
 
 ```bash
-docker pull jlbez/dxt-explorer
+docker pull hpcio/dxt-explorer
 ```
 
 Since we need to provide an input file and access the generated `.html` files, make sure you are mounting your current directory in the container and removing the container after using it. You can pass the same arguments described above, after the container name (`dxt-explorer`).
