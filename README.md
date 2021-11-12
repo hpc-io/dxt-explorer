@@ -2,6 +2,9 @@
   <img src="https://github.com/hpc-io/dxt-explorer/raw/main/dxt-explorer.png" alt="DXT Explorer"/>
 </p>
 
+DXT Explorer is an interactive web-based log analysis tool to visualize Darshan DXT logs and help understand the I/O behavior of applications. Our tool adds an interactive component to Darshan trace analysis that can aid researchers, developers, and end-users to visually inspect their applications' I/O behavior, zoom-in on areas of interest and have a clear picture of where is the I/O problem. 
+
+### Dependencies
 
 The Darshan eXtended Tracing (DXT) support is disabled by default in Darshan. To enable tracing globally for all files, you need to set the `DXT_ENABLE_IO_TRACE ` environment variable as follows:
 
@@ -20,6 +23,8 @@ pip install -r requirements.txt
 In the first execution ever, DXT Explorer will automatically download any missing R packages required, thus it might take longer to generate the plot.
 
 You also need to have Darshan Utils installed (`darshan-dxt-parser`) and available in your path.
+
+### Explore!
 
 Once you have the dependencies installed, you can run:
 
@@ -45,6 +50,45 @@ optional arguments:
 
 DXT Explorer will generate by default a `explore.html` file with an interactive plot that you can open in any browser to explore. If you enabled the transfer or spatility plots, additional `.html` files will be generated, one for each type.
 
+You can find a couple of interactive examples of DXT traces collected from FLASH, E2E, and OpenPMD in the [companion repository](https://jeanbez.gitlab.io/pdsw-2021) for our PDSW'21 paper.
+
+### Docker Image
+
+You can also use a Docker image already pre-configured with all dependencies to run DXT Explorer:
+
+```bash
+docker pull hpcio/dxt-explorer
+```
+
+Since we need to provide an input file and access the generated `.html` files, make sure you are mounting your current directory in the container and removing the container after using it. You can pass the same arguments described above, after the container name (`dxt-explorer`).
+
+```bash
+docker run --rm --mount \
+  type=bind,source="$(PWD)",target="/dxt-explorer/darshan" \
+  dxt-explorer darshan/<FILE>.darshan
+```
+
+```bash
+2021-10-05 03:21:34,907 explore - INFO - darshan-dxt-parser: FOUND
+2021-10-05 03:21:34,907 explore - INFO - Rscript: FOUND
+2021-10-05 03:21:34,907 explore - INFO - parsing darshan/<FILE>.darshan file
+2021-10-05 03:21:35,248 explore - INFO - generating an intermediate CSV file
+2021-10-05 03:21:36,240 explore - INFO - generating interactive operation plot
+2021-10-05 03:21:54,657 explore - INFO - SUCCESS
+```
+
+### Citation
+
+You can find more information about DXT Explorer in our PDSW'21 paper. If you use DXT in your experiments, please consider citing:
+
+```
+@inproceedings{dxt-explorer,
+  title = {{I/O Bottleneck Detection and Tuning: Connecting the Dots using Interactive Log Analysis}},
+  author = {Bez, Jean Luca and Tang, Houjun and Xie, Bing, and Williams-Young, David and Latham, Rob and Ross, Rob and Oral, Sarp and Byna, Suren},
+  booktitle = {2021 IEEE/ACM 6th International Parallel Data Systems Workshop (PDSW)}
+  year = {2021}
+}
+```
 ---
 
 DXT Explorer Copyright (c) 2021, The Regents of the University of California, through Lawrence Berkeley National Laboratory (subject to receipt of any required approvals from the U.S. Dept. of Energy). All rights reserved.
