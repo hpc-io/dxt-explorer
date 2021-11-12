@@ -61,6 +61,25 @@ df$label = paste0(
 	'Offset: ', df$offset
 )
 
+# Include a zero record to ensure we can facet the plot
+df <- rbind(df, 
+	data.frame(
+		file_id = c(0, 0, 0, 0),
+		api = c('POSIX', 'POSIX', 'MPIIO', 'MPIIO'),
+		rank = c(0, 0, 0, 0),
+		operation = c('write', 'read', 'write', 'read'),
+		segment = c(0, 0, 0, 0),
+		offset = c(0, 0, 0, 0),
+		size = c(0, 0, 0, 0),
+		start = c(0, 0, 0, 0),
+		end = c(0, 0, 0, 0),
+		duration = c(0, 0),
+		label = c('', '')
+	)
+)
+
+df$operation <- as.factor(df$operation)
+
 maximum = max(df$end) + (max(df$end) * 0.01)
 
 plot_posix <- ggplot(
@@ -79,11 +98,13 @@ plot_posix <- ggplot(
 		values = c(
 			"#f0746e",
 			"#3c93c2"
-		)
+		),
+		drop = FALSE
 	) +
 	scale_x_continuous(breaks = seq(0, maximum, length.out = 10)) +
 	facet_grid(api ~ .) +
 	expand_limits(x = 0) +
+	ylim(0, max(df$rank)) +
 	xlab('Time') +
 	ylab('Rank #') +
 	theme_bw() +
@@ -109,11 +130,13 @@ plot_mpiio <- ggplot(
 		values = c(
 			"#f0746e",
 			"#3c93c2"
-		)
+		),
+		drop = FALSE
 	) +
 	scale_x_continuous(breaks = seq(0, maximum, length.out = 10)) +
 	facet_grid(api ~ .) +
 	expand_limits(x = 0) +
+	ylim(0, max(df$rank)) +
 	xlab('Time') +
 	ylab('Rank #') +
 	theme_bw() +
@@ -130,12 +153,18 @@ p_posix <- ggplotly(
 		tooltip = "text",
 		legendgroup = operation
 	) %>%
+	rangeslider(min(df$start), max(df$end), thickness = 0.03) %>%
 	layout(
 		margin = list(pad = 0),
-		yaxis = list(fixedrange = FALSE),
 		legend = list(orientation = "h", x = 0, y = length(df$ranks) + 6),
 		autosize = TRUE,
-		xaxis = list(matches = 'x')
+		xaxis = list(title = 'Runtime (seconds)', matches = 'x'),
+		yaxis = list(title = 'Rank', fixedrange = FALSE),
+		hoverlabel = list(font = list(color = 'white')),
+		title = '<b>DXT Explorer</b> Operation'
+	) %>%
+	style(
+    		showlegend = FALSE
 	) %>%
 	toWebGL()
 
@@ -146,20 +175,23 @@ p_mpiio <- ggplotly(
 		tooltip = "text",
 		legendgroup = operation
 	) %>%
-	rangeslider(min(df$start), max(df$end), thickness = 0.05) %>%
 	layout(
 		margin = list(pad = 0),
-		yaxis = list(fixedrange = FALSE),
 		legend = list(orientation = "h", x = 0, y = length(df$ranks) + 6),
 		autosize = TRUE,
-		xaxis = list(matches = 'x')
-
-	) %>%
-	style(
-    		showlegend = FALSE
+		xaxis = list(matches = 'x'),
+		yaxis = list(title = 'Rank', fixedrange = FALSE),
+		hoverlabel = list(font = list(color = 'white'))
 	) %>%
 	toWebGL()
 
-p <- subplot(p_posix, p_mpiio, nrows = 2)
+p <- subplot(
+	p_mpiio, p_posix,
+	nrows = 2,
+	titleY = TRUE,
+	titleX = TRUE,
+	shareX = TRUE,
+	shareY = TRUE
+)
 
 saveWidget(p, selfcontained = FALSE, 'explore.html')
