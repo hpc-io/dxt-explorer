@@ -151,7 +151,8 @@ p_posix <- ggplotly(
 		width = 1800,
 		height = 1000,
 		tooltip = "text",
-		legendgroup = operation
+		legendgroup = operation,
+		dynamicTicks = TRUE
 	) %>%
 	rangeslider(min(df$start), max(df$end), thickness = 0.03) %>%
 	layout(
@@ -159,7 +160,7 @@ p_posix <- ggplotly(
 		legend = list(orientation = "h", x = 0, y = length(df$ranks) + 6),
 		autosize = TRUE,
 		xaxis = list(title = 'Runtime (seconds)', matches = 'x'),
-		yaxis = list(title = 'Rank', fixedrange = FALSE),
+		yaxis = list(title = 'Rank', matches = 'y', fixedrange = FALSE),
 		hoverlabel = list(font = list(color = 'white')),
 		title = '<b>DXT Explorer</b> Operation'
 	) %>%
@@ -173,14 +174,15 @@ p_mpiio <- ggplotly(
 		width = 1800,
 		height = 1000,
 		tooltip = "text",
-		legendgroup = operation
+		legendgroup = operation,
+		dynamicTicks = TRUE
 	) %>%
 	layout(
 		margin = list(pad = 0),
 		legend = list(orientation = "h", x = 0, y = length(df$ranks) + 6),
 		autosize = TRUE,
 		xaxis = list(matches = 'x'),
-		yaxis = list(title = 'Rank', fixedrange = FALSE),
+		yaxis = list(title = 'Rank', matches = 'y', fixedrange = FALSE),
 		hoverlabel = list(font = list(color = 'white'))
 	) %>%
 	toWebGL()

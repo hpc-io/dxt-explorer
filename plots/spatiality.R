@@ -38,12 +38,12 @@ if (any(installed_packages == FALSE)) {
 invisible(lapply(packages, library, character.only = TRUE))
 
 option_list = list(
-  	make_option(
-  		c('-f', '--file'),
-  		type = 'character',
-  		default = NULL, 
-        help = 'DXT CSV file name',
-        metavar = 'character'
+	make_option(
+		c('-f', '--file'),
+		type = 'character',
+		default = NULL, 
+	help = 'DXT CSV file name',
+	metavar = 'character'
     )
 )
  
@@ -54,11 +54,35 @@ df <- read.csv(file=opt$file, sep = ',')
 
 df$duration = df$end - df$start
 
-df$label = paste0('Rank: ', df$rank, '\nOperation: ', df$operation, '\nDuration: ', round(df$duration, digits = 3), ' seconds\nSize: ', (df$size / 1024), ' KB')
+df$label = paste0(
+	'Rank: ', df$rank, '\n',
+	'Operation: ', df$operation, '\n',
+	'Duration: ', round(df$duration, digits = 3), ' seconds\n',
+	'Size: ', (df$size / 1024), ' KB'
+)
+
+# Include a zero record to ensure we can facet the plot
+df <- rbind(df, 
+	data.frame(
+		file_id = c(0, 0, 0, 0),
+		api = c('POSIX', 'POSIX', 'MPIIO', 'MPIIO'),
+		rank = c(0, 0, 0, 0),
+		operation = c('write', 'read', 'write', 'read'),
+		segment = c(0, 0, 0, 0),
+		offset = c(0, 0, 0, 0),
+		size = c(0, 0, 0, 0),
+		start = c(0, 0, 0, 0),
+		end = c(0, 0, 0, 0),
+		duration = c(0, 0),
+		label = c('', '')
+	)
+)
+
+df$operation <- as.factor(df$operation)
 
 palette <- wes_palette('Zissou1', 100, type = 'continuous')
 
-maximum = max(df$end) + (max(df$end) * 0.01)
+maximum = max(df$offset) + (max(df$offset) * 0.01)
 
 plot_posix_write <- ggplot(
 	df[df$api == 'POSIX' & df$operation == 'write', ],
@@ -78,6 +102,7 @@ plot_posix_write <- ggplot(
 		colours = palette
 	) +  
 	expand_limits(x = 0) +
+	ylim(0, max(df$rank)) +
 	xlab('File offset (bytes)') +
 	ylab('Rank #') +
 	theme_bw() +
@@ -105,6 +130,7 @@ plot_posix_read <- ggplot(
 		colours = palette
 	) +  
 	expand_limits(x = 0) +
+	ylim(0, max(df$rank)) +
 	xlab('File offset (bytes)') +
 	ylab('Rank #') +
 	theme_bw() +
@@ -124,10 +150,15 @@ p_posix_write <- ggplotly(
 	) %>%
 	layout(
 		margin = list(pad = 0),
-		yaxis = list(fixedrange = FALSE),
 		legend = list(orientation = "h", x = 0, y = length(df$ranks) + 6),
 		autosize = TRUE,
-		xaxis = list(matches = 'x')
+		xaxis = list(title = 'File offset (bytes)', matches = 'x'),
+		yaxis = list(title = 'Rank', matches = 'y', fixedrange = FALSE),
+		hoverlabel = list(font = list(color = 'white')),
+		title = '<b>DXT Explorer</b> Operation'
+	) %>%
+	style(
+		showlegend = FALSE
 	) %>%
 	toWebGL()
 
@@ -139,20 +170,24 @@ p_posix_read <- ggplotly(
 		legendgroup = operation,
 		dynamicTicks = TRUE
 	) %>%
-	rangeslider(0, maximum, thickness = 0.05) %>%
+	rangeslider(0, maximum, thickness = 0.03) %>%
 	layout(
 		margin = list(pad = 0),
-		yaxis = list(fixedrange = FALSE),
 		legend = list(orientation = "h", x = 0, y = length(df$ranks) + 6),
 		autosize = TRUE,
-		xaxis = list(matches = 'x')
-
-	) %>%
-	style(
-    		showlegend = FALSE
+		xaxis = list(title = 'File offset (bytes)', matches = 'x'),
+		yaxis = list(title = 'Rank', matches = 'y', fixedrange = FALSE),
+		hoverlabel = list(font = list(color = 'white'))
 	) %>%
 	toWebGL()
 
-p <- subplot(p_posix_write, p_posix_read, nrows = 2)
+p <- subplot(
+	p_posix_write, p_posix_read,
+	nrows = 2,
+	titleY = TRUE,
+	titleX = TRUE,
+	shareX = TRUE,
+	shareY = TRUE
+)
 
 saveWidget(p, selfcontained = FALSE, 'explore-spatiality.html')

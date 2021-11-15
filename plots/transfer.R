@@ -56,6 +56,8 @@ df$duration = df$end - df$start
 
 df$label = paste0('Rank: ', df$rank, '\nOperation: ', df$operation, '\nDuration: ', round(df$duration, digits = 3), ' seconds\nSize: ', (df$size / 1024), ' KB')
 
+df$operation <- as.factor(df$operation)
+
 palette <- wes_palette('Zissou1', 100, type = 'continuous')
 
 maximum = max(df$end) + (max(df$end) * 0.01)
@@ -122,12 +124,18 @@ p_posix <- ggplotly(
 		legendgroup = operation,
 		dynamicTicks = TRUE
 	) %>%
+	rangeslider(min(df$start), max(df$end), thickness = 0.03) %>%
 	layout(
 		margin = list(pad = 0),
-		yaxis = list(fixedrange = FALSE),
 		legend = list(orientation = "h", x = 0, y = length(df$ranks) + 6),
 		autosize = TRUE,
-		xaxis = list(matches = 'x')
+		xaxis = list(title = 'Runtime (seconds)', matches = 'x'),
+		yaxis = list(title = 'Rank', matches = 'y', fixedrange = FALSE),
+		hoverlabel = list(font = list(color = 'white')),
+		title = '<b>DXT Explorer</b> Transfer Size'
+	) %>%
+	style(
+    		showlegend = FALSE
 	) %>%
 	toWebGL()
 
@@ -139,20 +147,23 @@ p_mpiio <- ggplotly(
 		legendgroup = operation,
 		dynamicTicks = TRUE
 	) %>%
-	rangeslider(0, maximum, thickness = 0.05) %>%
 	layout(
 		margin = list(pad = 0),
-		yaxis = list(fixedrange = FALSE),
 		legend = list(orientation = "h", x = 0, y = length(df$ranks) + 6),
 		autosize = TRUE,
-		xaxis = list(matches = 'x')
-
-	) %>%
-	style(
-    		showlegend = FALSE
+		xaxis = list(matches = 'x'),
+		yaxis = list(title = 'Rank', matches = 'y', fixedrange = FALSE),
+		hoverlabel = list(font = list(color = 'white'))
 	) %>%
 	toWebGL()
 
-p <- subplot(p_posix, p_mpiio, nrows = 2)
+p <- subplot(
+	p_mpiio, p_posix,
+	nrows = 2,
+	titleY = TRUE,
+	titleX = TRUE,
+	shareX = TRUE,
+	shareY = TRUE
+)
 
 saveWidget(p, selfcontained = FALSE, 'explore-transfer.html')
