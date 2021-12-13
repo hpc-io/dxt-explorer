@@ -64,15 +64,15 @@ df$label = paste0(
 # Include a zero record to ensure we can facet the plot
 df <- rbind(df, 
 	data.frame(
-		file_id = c(0, 0, 0, 0),
-		api = c('POSIX', 'POSIX', 'MPIIO', 'MPIIO'),
-		rank = c(0, 0, 0, 0),
-		operation = c('write', 'read', 'write', 'read'),
-		segment = c(0, 0, 0, 0),
-		offset = c(0, 0, 0, 0),
-		size = c(0, 0, 0, 0),
-		start = c(0, 0, 0, 0),
-		end = c(0, 0, 0, 0),
+		file_id = c(0, 0),
+		api = c('POSIX', 'POSIX'),
+		rank = c(0, 0),
+		operation = c('write', 'read'),
+		segment = c(0, 0),
+		offset = c(0, 0),
+		size = c(0, 0),
+		start = c(0, 0),
+		end = c(0, 0),
 		duration = c(0, 0),
 		label = c('', '')
 	)
@@ -155,7 +155,7 @@ p_posix_write <- ggplotly(
 		xaxis = list(title = 'File offset (bytes)', matches = 'x'),
 		yaxis = list(title = 'Rank', matches = 'y', fixedrange = FALSE),
 		hoverlabel = list(font = list(color = 'white')),
-		title = '<b>DXT Explorer</b> Operation'
+		title = '<b>DXT Explorer</b> Request Spatiality'
 	) %>%
 	style(
 		showlegend = FALSE
@@ -190,4 +190,4 @@ p <- subplot(
 	shareY = TRUE
 )
 
-saveWidget(p, selfcontained = FALSE, 'explore-spatiality.html')
+saveWidget(p, selfcontained = TRUE, 'explore-spatiality.html')

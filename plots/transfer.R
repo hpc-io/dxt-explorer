@@ -166,4 +166,4 @@ p <- subplot(
 	shareY = TRUE
 )
 
-saveWidget(p, selfcontained = FALSE, 'explore-transfer.html')
+saveWidget(p, selfcontained = TRUE, 'explore-transfer.html')
