@@ -1,4 +1,4 @@
-#!/usr/bin/python3
+#!/usr/bin/env python3
 
 """
 DXT Explorer.
@@ -39,16 +39,20 @@ class Explorer:
 
     def __init__(self, args):
         """Initialize the explorer."""
+        self.args = args
+
         self.configure_log()
         self.has_dxt_parser()
         self.has_r_support()
 
-        self.args = args
-
     def configure_log(self):
         """Configure the logging system."""
         self.logger = logging.getLogger('DXT Explorer')
-        self.logger.setLevel(logging.DEBUG)
+
+        if self.args.debug:
+            self.logger.setLevel(logging.DEBUG)
+        else:
+            self.logger.setLevel(logging.INFO)
 
         # Defines the format of the logger
         formatter = logging.Formatter('%(asctime)s %(module)s - %(levelname)s - %(message)s')
@@ -61,8 +65,11 @@ class Explorer:
 
     def run(self):
         self.is_darshan_file(self.args.darshan)
-
         self.parse(self.args.darshan)
+
+        if self.args.list_files:
+            self.list_files(self.args.darshan)
+
         self.generate_plot(self.args.darshan)
 
         if self.args.transfer:
@@ -139,7 +146,8 @@ class Explorer:
                     'offset',
                     'size',
                     'start',
-                    'end'
+                    'end',
+                    'file_name'
                 ])
 
                 for line in lines:
@@ -168,7 +176,8 @@ class Explorer:
                             offset,
                             size,
                             start,
-                            end
+                            end,
+                            file_name
                         ])
 
                     if 'X_MPIIO' in line:
@@ -201,9 +210,25 @@ class Explorer:
                             offset,
                             size,
                             start,
-                            end
+                            end,
+                            file_name
                         ])
 
+    def list_files(self, file):
+        files = []
+
+        with open(file + '.dxt.csv', 'r', newline='') as csvfile:
+            r = csv.DictReader(csvfile)
+
+            for row in r:
+                if row['file_name'] not in files:
+                    files.append(row['file_name'])
+
+
+        for file in files:
+            self.logger.info('FILE: {}'.format(file))
+
+            exit()
 
     def generate_plot(self, file):
         """Generate an interactive operation plot."""
@@ -317,6 +342,35 @@ PARSER.add_argument(
     help='Generate an interactive spatiality explorer'
 )
 
+PARSER.add_argument(
+    '-d',
+    '--debug',
+    action='store_true',
+    dest='debug',
+    help='Enable debug mode'
+)
+
+PARSER.add_argument(
+    '-l',
+    '--list',
+    action='store_true',
+    dest='list_files',
+    help='List all the files with trace'
+)
+
+PARSER.add_argument(
+    '--start',
+    action='store',
+    dest='start',
+    help='Report starts from X seconds from begining of the job'
+)
+
+PARSER.add_argument(
+    '--finish',
+    action='store',
+    dest='finish',
+    help='Report finishes at X seconds from begining of the job'
+)
 
 ARGS = PARSER.parse_args()
 
