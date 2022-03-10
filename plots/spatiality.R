@@ -22,6 +22,7 @@ packages <- c(
 	'plyr',
 	'plotly',
 	'htmlwidgets',
+	'rmarkdown',
 	'wesanderson'
 )
 
@@ -36,6 +37,12 @@ if (any(installed_packages == FALSE)) {
 
 # Packages loading
 invisible(lapply(packages, library, character.only = TRUE))
+
+if (pandoc_available()) {
+    self_contained = TRUE
+} else {
+    self_contained = FALSE
+}
 
 option_list = list(
 	make_option(
@@ -190,4 +197,4 @@ p <- subplot(
 	shareY = TRUE
 )
 
-saveWidget(p, selfcontained = TRUE, 'explore-spatiality.html')
+saveWidget(p, selfcontained = self_contained, 'explore-spatiality.html')
