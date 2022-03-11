@@ -22,6 +22,7 @@ packages <- c(
     'optparse',
     'plyr',
     'plotly',
+    'rmarkdown',
     'htmlwidgets'
 )
 
@@ -36,6 +37,12 @@ if (any(installed_packages == FALSE)) {
 
 # Packages loading
 invisible(lapply(packages, library, warn.conflicts = FALSE, quietly = TRUE, character.only = TRUE))
+
+if (pandoc_available()) {
+    self_contained = TRUE
+} else {
+    self_contained = FALSE
+}
 
 option_list = list(
     make_option(
@@ -79,6 +86,13 @@ option_list = list(
         default = NULL, 
         help = 'Name of the output file',
         metavar = 'output'
+    ),
+    make_option(
+        c('-u', '--html'),
+        type = 'logical',
+        default = TRUE, 
+        help = 'Generate a self-contained HTML file (requires pandoc)',
+        metavar = 'html'
     )
 )
 
@@ -96,7 +110,7 @@ maximum = max(df$end)
 
 maximum_rank = max(df$rank)
 
-minimum_limit = min(df$start) - (duration * 0.05)
+minimum_limit = -0.05
 maximum_limit = max(df$end) + (duration * 0.05)
 
 if (!is.null(opt$start)) {
@@ -113,6 +127,10 @@ if (!is.null(opt$from)) {
 
 if (!is.null(opt$to)) {
     df <- df[df$rank <= opt$to, ]
+}
+
+if (nrow(df) == 0) {
+    quit()
 }
 
 df$label = paste0(
@@ -591,4 +609,4 @@ config(
     displaylogo = FALSE
 )
 
-saveWidget(p, selfcontained = TRUE, opt$output)
+saveWidget(p, selfcontained = self_contained, opt$output)

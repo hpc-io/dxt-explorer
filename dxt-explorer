@@ -253,9 +253,10 @@ class Explorer:
                         files.append(file_name)
                         files_id.append(file_id)
 
-        for file in files:
-            self.logger.info('FILE: {}'.format(file))
-            self.logger.info('{} I/O trace observation records'.format(len(lines)))
+        for i in range(0, len(files)):
+            self.logger.info('FILE: {} (ID {})'.format(files[i], files_id[i]))
+        
+        self.logger.info('{} I/O trace observation records'.format(len(lines)))
 
         return files_id
 
@@ -305,10 +306,12 @@ class Explorer:
         file_ids = self.list_files(file)
 
         # Generated the CSV files for each plot
-        self.subset_dataset(file, file_ids)
+        observations = self.subset_dataset(file, file_ids)
 
         for file_id in file_ids:
-            command = 'plots/operation.R -f {}.{}.dxt.csv {} -o {}.{}.operation.html'.format(file, file_id, limits, file, file_id)
+            output_file = '{}.{}.operation.html'.format(file, file_id)
+
+            command = 'plots/operation.R -f {}.{}.dxt.csv {} -o {}'.format(file, file_id, limits, output_file)
 
             args = shlex.split(command)
 
@@ -318,12 +321,15 @@ class Explorer:
             s = subprocess.run(args, stderr=subprocess.PIPE, stdout=subprocess.PIPE)
 
             if s.returncode == 0:
-                self.logger.info('SUCCESS')
+                if os.path.exists(output_file):
+                    self.logger.info('SUCCESS')
+                else:
+                    self.logger.warning('no data to generate interactive plots')
 
                 if self.args.browser:
-                    webbrowser.open('file://{}.{}.operation.html'.format(file, file_id), new=2)
+                    webbrowser.open('file://{}'.format(output_file), new=2)
             else:
-                self.logger.error('Failed to generate the interactive plots (error %s)', s.returncode)
+                self.logger.error('failed to generate the interactive plots (error %s)', s.returncode)
 
                 if s.stdout is not None:
                     for item in s.stdout.decode().split('\n'):
@@ -338,29 +344,52 @@ class Explorer:
 
     def generate_transfer_plot(self, file):
         """Generate an interactive transfer plot."""
-        command = 'plots/transfer.R -f {0}.dxt.csv'.format(file)
+        limits = ''
 
-        args = shlex.split(command)
+        if self.args.start:
+            limits += ' -s {} '.format(self.args.start)
 
-        self.logger.info('generating interactive transfer plot')
+        if self.args.end:
+            limits += ' -e {} '.format(self.args.end)
 
-        s = subprocess.run(args, stderr=subprocess.PIPE, stdout=subprocess.PIPE)
+        if self.args.start_rank:
+            limits += ' -n {} '.format(self.args.start_rank)
 
-        if s.returncode == 0:
-            self.logger.info('SUCCESS')
-        else:
-            self.logger.error('Failed to generate the interactive plots (error %s)', s.returncode)
+        if self.args.end_rank:
+            limits += ' -m {} '.format(self.args.end_rank)
 
-            if s.stdout is not None:
-                for item in s.stdout.decode().split('\n'):
-                    if item.strip() != '':
-                        self.logger.debug(item)
+        file_ids = self.list_files(file)
 
-            if s.stderr is not None:
-                for item in s.stderr.decode().split('\n'):
-                    if item.strip() != '':
-                        self.logger.error(item)
+        # Generated the CSV files for each plot
+        self.subset_dataset(file, file_ids)
 
+        for file_id in file_ids:
+            command = 'plots/transfer.R -f {}.{}.dxt.csv {} -o {}.{}.transfer.html'.format(file, file_id, limits, file, file_id)
+
+            args = shlex.split(command)
+
+            self.logger.info('generating interactive transfer plot')
+            self.logger.debug(command)
+
+            s = subprocess.run(args, stderr=subprocess.PIPE, stdout=subprocess.PIPE)
+
+            if s.returncode == 0:
+                self.logger.info('SUCCESS')
+
+                if self.args.browser:
+                    webbrowser.open('file://{}.{}.transfer.html'.format(file, file_id), new=2)
+            else:
+                self.logger.error('failed to generate the interactive plots (error %s)', s.returncode)
+
+                if s.stdout is not None:
+                    for item in s.stdout.decode().split('\n'):
+                        if item.strip() != '':
+                            self.logger.debug(item)
+
+                if s.stderr is not None:
+                    for item in s.stderr.decode().split('\n'):
+                        if item.strip() != '':
+                            self.logger.error(item)
 
     def generate_spatiality_plot(self, file):
         """Generate an interactive spatiality plot."""
@@ -375,7 +404,7 @@ class Explorer:
         if s.returncode == 0:
             self.logger.info('SUCCESS')
         else:
-            self.logger.error('Failed to generate the interactive plots (error %s)', s.returncode)
+            self.logger.error('failed to generate the interactive plots (error %s)', s.returncode)
 
             if s.stdout is not None:
                 for item in s.stdout.decode().split('\n'):
