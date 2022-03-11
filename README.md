@@ -24,6 +24,12 @@ In the first execution ever, DXT Explorer will automatically download any missin
 
 You also need to have Darshan Utils installed (`darshan-dxt-parser`) and available in your path.
 
+If you run DXT Explorer in Summit you need to load some modules:
+
+```bash
+module load python r cairo
+```
+
 ### Explore!
 
 Once you have the dependencies installed, you can run:
