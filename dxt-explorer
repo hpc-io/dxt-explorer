@@ -32,7 +32,6 @@ import logging.handlers
 
 import pandas as pd
 
-from plotnine import *
 from distutils.spawn import find_executable
 
 
@@ -238,8 +237,7 @@ class Explorer:
                         ])
 
     def list_files(self, file):
-        files = []
-        files_id = []
+        files = {}
 
         with open(file + '.dxt') as f:
             lines = f.readlines()
@@ -249,16 +247,15 @@ class Explorer:
                     file_id = line.split(',')[1].split(':')[1].strip()
                     file_name = line.split(',')[2].split(':')[1].strip()
 
-                    if file_name not in files:
-                        files.append(file_name)
-                        files_id.append(file_id)
+                    if file_id not in files.keys():
+                        files[file_id] = file_name
 
-        for i in range(0, len(files)):
-            self.logger.info('FILE: {} (ID {})'.format(files[i], files_id[i]))
+        for file_id, file_name in files.items():
+            self.logger.info('FILE: {} (ID {})'.format(file_name, file_id))
         
-        self.logger.info('{} I/O trace observation records'.format(len(lines)))
+        self.logger.info('{} I/O trace observation records from {} files'.format(len(lines), len(files)))
 
-        return files_id
+        return files
 
     def subset_dataset(self, file, file_ids):
         for file_id in file_ids:
@@ -308,10 +305,10 @@ class Explorer:
         # Generated the CSV files for each plot
         observations = self.subset_dataset(file, file_ids)
 
-        for file_id in file_ids:
+        for file_id, file_name in file_ids.items():
             output_file = '{}.{}.operation.html'.format(file, file_id)
 
-            command = 'plots/operation.R -f {}.{}.dxt.csv {} -o {}'.format(file, file_id, limits, output_file)
+            command = 'plots/operation.R -f {}.{}.dxt.csv {} -o {} -x {}'.format(file, file_id, limits, output_file, file_name)
 
             args = shlex.split(command)
 

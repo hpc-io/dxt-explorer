@@ -93,6 +93,13 @@ option_list = list(
         default = TRUE, 
         help = 'Generate a self-contained HTML file (requires pandoc)',
         metavar = 'html'
+    ),
+    make_option(
+        c('-x', '--identifier'),
+        type = 'character',
+        default = TRUE, 
+        help = 'Set the identifier of the original file captured by Darshan DXT',
+        metavar = 'identifier'
     )
 )
 
@@ -493,7 +500,7 @@ p_posix <- p_posix %>%
             'Explore <b>Operation</b>',
             '<br>',
             '<sup>',
-            basename(opt$file),
+            opt$identifier,
             '</sup>'
         )
     ) %>%
