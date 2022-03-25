@@ -21,6 +21,7 @@ packages <- c(
 	'optparse',
 	'plyr',
 	'plotly',
+	'rmarkdown',
 	'htmlwidgets'
 )
 
@@ -37,14 +38,20 @@ if (any(installed_packages == FALSE)) {
 invisible(lapply(packages, library, character.only = TRUE))
 
 option_list = list(
-  	make_option(
-  		c('-f', '--file'),
-  		type = 'character',
-  		default = NULL, 
+    make_option(
+  	c('-f', '--file'),
+  	type = 'character',
+  	default = NULL, 
         help = 'DXT CSV file name',
         metavar = 'character'
     )
 )
+
+if (pandoc_available()) {
+    self_contained = TRUE
+} else {
+    self_contained = FALSE
+}
  
 opt_parser = OptionParser(option_list=option_list)
 opt = parse_args(opt_parser)
@@ -196,4 +203,4 @@ p <- subplot(
 	shareY = TRUE
 )
 
-saveWidget(p, selfcontained = TRUE, 'explore.html')
+saveWidget(p, selfcontained = self_contained, 'explore.html')
