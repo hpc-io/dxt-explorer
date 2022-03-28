@@ -21,6 +21,7 @@ packages <- c(
 	'optparse',
 	'plyr',
 	'plotly',
+    'rmarkdown',
 	'htmlwidgets',
 	'rmarkdown',
 	'wesanderson'
