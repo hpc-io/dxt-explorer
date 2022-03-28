@@ -80,6 +80,16 @@ class Explorer:
         if self.args.spatiality:
             self.generate_spatiality_plot(self.args.darshan)
 
+    def get_directory(self):
+        """Determine the install path to find the execution scripts."""
+        try:
+            root = __file__
+            if os.path.islink(root):
+                root = os.path.realpath(root)
+
+            return os.path.dirname(os.path.abspath(root))
+        except:
+            return None
 
     def is_darshan_file(self, file):
         """Check if the provided file exists and is a .darshan file."""
@@ -308,7 +318,14 @@ class Explorer:
         for file_id, file_name in file_ids.items():
             output_file = '{}.{}.operation.html'.format(file, file_id)
 
-            command = 'plots/operation.R -f {}.{}.dxt.csv {} -o {} -x {}'.format(file, file_id, limits, output_file, file_name)
+            command = '{}/plots/operation.R -f {}.{}.dxt.csv {} -o {} -x {}'.format(
+                self.get_directory(),
+                file,
+                file_id,
+                limits,
+                output_file,
+                file_name
+            )
 
             args = shlex.split(command)
 
@@ -361,7 +378,14 @@ class Explorer:
         self.subset_dataset(file, file_ids)
 
         for file_id in file_ids:
-            command = 'plots/transfer.R -f {}.{}.dxt.csv {} -o {}.{}.transfer.html'.format(file, file_id, limits, file, file_id)
+            command = '{}/plots/transfer.R -f {}.{}.dxt.csv {} -o {}.{}.transfer.html'.format(
+                self.get_directory(),
+                file,
+                file_id,
+                limits,
+                file,
+                file_id
+            )
 
             args = shlex.split(command)
 
@@ -390,7 +414,10 @@ class Explorer:
 
     def generate_spatiality_plot(self, file):
         """Generate an interactive spatiality plot."""
-        command = 'plots/spatiality.R -f {0}.dxt.csv'.format(file)
+        command = '{}/plots/spatiality.R -f {}.dxt.csv'.format(
+            self.get_directory(),
+            file
+        )
 
         args = shlex.split(command)
 
