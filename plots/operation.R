@@ -88,13 +88,6 @@ option_list = list(
         metavar = 'output'
     ),
     make_option(
-        c('-u', '--html'),
-        type = 'logical',
-        default = TRUE, 
-        help = 'Generate a self-contained HTML file (requires pandoc)',
-        metavar = 'html'
-    ),
-    make_option(
         c('-x', '--identifier'),
         type = 'character',
         default = TRUE, 

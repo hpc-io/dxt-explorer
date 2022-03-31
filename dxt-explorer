@@ -414,32 +414,49 @@ class Explorer:
 
     def generate_spatiality_plot(self, file):
         """Generate an interactive spatiality plot."""
-        command = '{}/plots/spatiality.R -f {}.dxt.csv'.format(
-            self.get_directory(),
-            file
-        )
+        file_ids = self.list_files(file)
 
-        args = shlex.split(command)
+        # Generated the CSV files for each plot
+        observations = self.subset_dataset(file, file_ids)
 
-        self.logger.info('generating interactive spatiality plot')
+        for file_id, file_name in file_ids.items():
+            output_file = '{}.{}.spatiality.html'.format(file, file_id)
 
-        s = subprocess.run(args, stderr=subprocess.PIPE, stdout=subprocess.PIPE)
+            command = '{}/plots/spatiality.R -f {}.{}.dxt.csv -o {} -x {}'.format(
+                self.get_directory(),
+                file,
+                file_id,
+                output_file,
+                file_name
+            )
 
-        if s.returncode == 0:
-            self.logger.info('SUCCESS')
-        else:
-            self.logger.error('failed to generate the interactive plots (error %s)', s.returncode)
+            args = shlex.split(command)
 
-            if s.stdout is not None:
-                for item in s.stdout.decode().split('\n'):
-                    if item.strip() != '':
-                        self.logger.debug(item)
+            self.logger.info('generating interactive spatiality plot')
+            self.logger.debug(command)
 
-            if s.stderr is not None:
-                for item in s.stderr.decode().split('\n'):
-                    if item.strip() != '':
-                        self.logger.error(item)
+            s = subprocess.run(args, stderr=subprocess.PIPE, stdout=subprocess.PIPE)
 
+            if s.returncode == 0:
+                if os.path.exists(output_file):
+                    self.logger.info('SUCCESS')
+                else:
+                    self.logger.warning('no data to generate spatiality plots')
+
+                if self.args.browser:
+                    webbrowser.open('file://{}'.format(output_file), new=2)
+            else:
+                self.logger.error('failed to generate the spatiality plots (error %s)', s.returncode)
+
+                if s.stdout is not None:
+                    for item in s.stdout.decode().split('\n'):
+                        if item.strip() != '':
+                            self.logger.debug(item)
+
+                if s.stderr is not None:
+                    for item in s.stderr.decode().split('\n'):
+                        if item.strip() != '':
+                            self.logger.error(item)
 
 
 PARSER = argparse.ArgumentParser(
