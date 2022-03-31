@@ -23,6 +23,7 @@ works, and perform publicly and display publicly, and to permit others to do so.
 import os
 import sys
 import csv
+import time
 import shlex
 import argparse
 import subprocess
@@ -33,6 +34,7 @@ import logging.handlers
 import pandas as pd
 
 from distutils.spawn import find_executable
+from alive_progress import alive_bar
 
 
 class Explorer:
@@ -268,36 +270,42 @@ class Explorer:
         return files
 
     def subset_dataset(self, file, file_ids):
-        for file_id in file_ids:
-            subset_dataset_file = '{}.{}'.format(file, file_id)
+        self.logger.info('generating datasets')
 
-            if os.path.exists(subset_dataset_file + '.dxt.csv'):
-                self.logger.debug('using existing parsed Darshan file')
+        with alive_bar(total=len(file_ids), title='', spinner=None, enrich_print=False) as bar:
+            for file_id in file_ids:
+                subset_dataset_file = '{}.{}'.format(file, file_id)
 
-                continue
+                if os.path.exists(subset_dataset_file + '.dxt.csv'):
+                    self.logger.debug('using existing parsed Darshan file')
 
-            with open(file + '.dxt.csv') as f:
-                rows = csv.DictReader(f)
+                    bar()
+                    continue
 
-                with open(subset_dataset_file + '.dxt.csv', 'w', newline='') as csvfile:
-                    w = csv.writer(csvfile)
+                with open(file + '.dxt.csv') as f:
+                    rows = csv.DictReader(f)
 
-                    w.writerow([
-                        'file_id',
-                        'api',
-                        'rank',
-                        'operation',
-                        'segment',
-                        'offset',
-                        'size',
-                        'start',
-                        'end',
-                        'ost'
-                    ])
+                    with open(subset_dataset_file + '.dxt.csv', 'w', newline='') as csvfile:
+                        w = csv.writer(csvfile)
 
-                    for row in rows:
-                        if file_id == row['file_id']:
-                            w.writerow(row.values())
+                        w.writerow([
+                            'file_id',
+                            'api',
+                            'rank',
+                            'operation',
+                            'segment',
+                            'offset',
+                            'size',
+                            'start',
+                            'end',
+                            'ost'
+                        ])
+
+                        for row in rows:
+                            if file_id == row['file_id']:
+                                w.writerow(row.values())
+
+                bar()
 
     def generate_plot(self, file):
         """Generate an interactive operation plot."""
@@ -320,46 +328,48 @@ class Explorer:
         # Generated the CSV files for each plot
         observations = self.subset_dataset(file, file_ids)
 
-        for file_id, file_name in file_ids.items():
-            output_file = '{}.{}.operation.html'.format(file, file_id)
+        with alive_bar(total=len(file_ids), title='', spinner=None, enrich_print=False) as bar:
+            for file_id, file_name in file_ids.items():
+                output_file = '{}.{}.operation.html'.format(file, file_id)
 
-            command = '{}/plots/operation.R -f {}.{}.dxt.csv {} -o {} -x {}'.format(
-                self.get_directory(),
-                file,
-                file_id,
-                limits,
-                output_file,
-                file_name
-            )
+                command = '{}/plots/operation.R -f {}.{}.dxt.csv {} -o {} -x {}'.format(
+                    self.get_directory(),
+                    file,
+                    file_id,
+                    limits,
+                    output_file,
+                    file_name
+                )
 
-            args = shlex.split(command)
+                args = shlex.split(command)
 
-            self.logger.info('generating interactive operation plot')
-            self.logger.debug(command)
+                self.logger.info('generating interactive operation for: {}'.format(file_name))
+                self.logger.debug(command)
 
-            s = subprocess.run(args, stderr=subprocess.PIPE, stdout=subprocess.PIPE)
+                s = subprocess.run(args, stderr=subprocess.PIPE, stdout=subprocess.PIPE)
 
-            if s.returncode == 0:
-                if os.path.exists(output_file):
-                    self.logger.info('SUCCESS')
+                if s.returncode == 0:
+                    if os.path.exists(output_file):
+                        self.logger.info('SUCCESS: {}'.format(output_file))
+                    else:
+                        self.logger.warning('no data to generate interactive plots')
+
+                    if self.args.browser:
+                        webbrowser.open('file://{}'.format(output_file), new=2)
                 else:
-                    self.logger.warning('no data to generate interactive plots')
+                    self.logger.error('failed to generate the interactive plots (error %s)', s.returncode)
 
-                if self.args.browser:
-                    webbrowser.open('file://{}'.format(output_file), new=2)
-            else:
-                self.logger.error('failed to generate the interactive plots (error %s)', s.returncode)
+                    if s.stdout is not None:
+                        for item in s.stdout.decode().split('\n'):
+                            if item.strip() != '':
+                                self.logger.debug(item)
 
-                if s.stdout is not None:
-                    for item in s.stdout.decode().split('\n'):
-                        if item.strip() != '':
-                            self.logger.debug(item)
+                    if s.stderr is not None:
+                        for item in s.stderr.decode().split('\n'):
+                            if item.strip() != '':
+                                self.logger.error(item)
 
-                if s.stderr is not None:
-                    for item in s.stderr.decode().split('\n'):
-                        if item.strip() != '':
-                            self.logger.error(item)
-
+                bar()
 
     def generate_transfer_plot(self, file):
         """Generate an interactive transfer plot."""
@@ -382,40 +392,45 @@ class Explorer:
         # Generated the CSV files for each plot
         self.subset_dataset(file, file_ids)
 
-        for file_id in file_ids:
-            command = '{}/plots/transfer.R -f {}.{}.dxt.csv {} -o {}.{}.transfer.html'.format(
-                self.get_directory(),
-                file,
-                file_id,
-                limits,
-                file,
-                file_id
-            )
+        with alive_bar(total=len(file_ids), title='', spinner=None, enrich_print=False) as bar:
+            for file_id, file_name in file_ids.items():
+                output_file = '{}.{}.transfer.html'.format(file, file_id)
 
-            args = shlex.split(command)
+                command = '{}/plots/transfer.R -f {}.{}.dxt.csv -o {} -x {}'.format(
+                    self.get_directory(),
+                    file,
+                    file_id,
+                    limits,
+                    file,
+                    file_id
+                )
 
-            self.logger.info('generating interactive transfer plot')
-            self.logger.debug(command)
+                args = shlex.split(command)
 
-            s = subprocess.run(args, stderr=subprocess.PIPE, stdout=subprocess.PIPE)
+                self.logger.info('generating interactive transfer for: {}'.format(file_name))
+                self.logger.debug(command)
 
-            if s.returncode == 0:
-                self.logger.info('SUCCESS')
+                s = subprocess.run(args, stderr=subprocess.PIPE, stdout=subprocess.PIPE)
 
-                if self.args.browser:
-                    webbrowser.open('file://{}.{}.transfer.html'.format(file, file_id), new=2)
-            else:
-                self.logger.error('failed to generate the interactive plots (error %s)', s.returncode)
+                if s.returncode == 0:
+                    self.logger.info('SUCCESS: {}'.format(output_file))
 
-                if s.stdout is not None:
-                    for item in s.stdout.decode().split('\n'):
-                        if item.strip() != '':
-                            self.logger.debug(item)
+                    if self.args.browser:
+                        webbrowser.open('file://{}.{}.transfer.html'.format(file, file_id), new=2)
+                else:
+                    self.logger.error('failed to generate the interactive plots (error %s)', s.returncode)
 
-                if s.stderr is not None:
-                    for item in s.stderr.decode().split('\n'):
-                        if item.strip() != '':
-                            self.logger.error(item)
+                    if s.stdout is not None:
+                        for item in s.stdout.decode().split('\n'):
+                            if item.strip() != '':
+                                self.logger.debug(item)
+
+                    if s.stderr is not None:
+                        for item in s.stderr.decode().split('\n'):
+                            if item.strip() != '':
+                                self.logger.error(item)
+
+                bar()
 
     def generate_spatiality_plot(self, file):
         """Generate an interactive spatiality plot."""
@@ -424,44 +439,47 @@ class Explorer:
         # Generated the CSV files for each plot
         observations = self.subset_dataset(file, file_ids)
 
-        for file_id, file_name in file_ids.items():
-            output_file = '{}.{}.spatiality.html'.format(file, file_id)
+        with alive_bar(total=len(file_ids), title='', spinner=None, enrich_print=False) as bar:
+            for file_id, file_name in file_ids.items():
+                output_file = '{}.{}.spatiality.html'.format(file, file_id)
 
-            command = '{}/plots/spatiality.R -f {}.{}.dxt.csv -o {} -x {}'.format(
-                self.get_directory(),
-                file,
-                file_id,
-                output_file,
-                file_name
-            )
+                command = '{}/plots/spatiality.R -f {}.{}.dxt.csv -o {} -x {}'.format(
+                    self.get_directory(),
+                    file,
+                    file_id,
+                    output_file,
+                    file_name
+                )
 
-            args = shlex.split(command)
+                args = shlex.split(command)
 
-            self.logger.info('generating interactive spatiality plot')
-            self.logger.debug(command)
+                self.logger.info('generating interactive spatiality for: {}'.format(file_name))
+                self.logger.debug(command)
 
-            s = subprocess.run(args, stderr=subprocess.PIPE, stdout=subprocess.PIPE)
+                s = subprocess.run(args, stderr=subprocess.PIPE, stdout=subprocess.PIPE)
 
-            if s.returncode == 0:
-                if os.path.exists(output_file):
-                    self.logger.info('SUCCESS')
+                if s.returncode == 0:
+                    if os.path.exists(output_file):
+                        self.logger.info('SUCCESS: {}'.format(output_file))
+                    else:
+                        self.logger.warning('no data to generate spatiality plots')
+
+                    if self.args.browser:
+                        webbrowser.open('file://{}'.format(output_file), new=2)
                 else:
-                    self.logger.warning('no data to generate spatiality plots')
+                    self.logger.error('failed to generate the spatiality plots (error %s)', s.returncode)
 
-                if self.args.browser:
-                    webbrowser.open('file://{}'.format(output_file), new=2)
-            else:
-                self.logger.error('failed to generate the spatiality plots (error %s)', s.returncode)
+                    if s.stdout is not None:
+                        for item in s.stdout.decode().split('\n'):
+                            if item.strip() != '':
+                                self.logger.debug(item)
 
-                if s.stdout is not None:
-                    for item in s.stdout.decode().split('\n'):
-                        if item.strip() != '':
-                            self.logger.debug(item)
+                    if s.stderr is not None:
+                        for item in s.stderr.decode().split('\n'):
+                            if item.strip() != '':
+                                self.logger.error(item)
 
-                if s.stderr is not None:
-                    for item in s.stderr.decode().split('\n'):
-                        if item.strip() != '':
-                            self.logger.error(item)
+                bar()
 
 
 PARSER = argparse.ArgumentParser(
