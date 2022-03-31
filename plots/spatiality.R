@@ -25,7 +25,8 @@ packages <- c(
     'rmarkdown',
     'htmlwidgets',
     'rmarkdown',
-    'wesanderson'
+    'wesanderson',
+    'Cairo'
 )
 
 # Install packages not yet installed
