@@ -17,11 +17,19 @@ setuptools.setup(
     long_description_content_type="text/markdown",
     url="https://github.com/hpc-io/dxt-explorer",
     install_requires=requirements,
-    include_package_data=True,
     packages=setuptools.find_packages(),
-    scripts=[
-    	"dxt-explorer"
-    ],
+    entry_points={
+        "console_scripts": [
+            "dxt-explorer=explore.dxt:main"
+        ]
+    },
+    package_data={
+        'explore': [
+            'plots/operation.R',
+            'plots/transfer.R',
+            'plots/spatiality.R'
+        ],
+    },
     classifiers=[
         "Development Status :: 4 - Beta",
         "Environment :: Console",
