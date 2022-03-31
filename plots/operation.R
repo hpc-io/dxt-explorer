@@ -23,7 +23,8 @@ packages <- c(
     'plyr',
     'plotly',
     'rmarkdown',
-    'htmlwidgets'
+    'htmlwidgets',
+    'Cairo'
 )
 
 # Install packages not yet installed
