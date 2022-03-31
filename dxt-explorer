@@ -271,6 +271,11 @@ class Explorer:
         for file_id in file_ids:
             subset_dataset_file = '{}.{}'.format(file, file_id)
 
+            if os.path.exists(subset_dataset_file + '.dxt.csv'):
+                self.logger.debug('using existing parsed Darshan file')
+
+                continue
+
             with open(file + '.dxt.csv') as f:
                 rows = csv.DictReader(f)
 
