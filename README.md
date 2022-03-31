@@ -27,7 +27,7 @@ You also need to have Darshan Utils installed (`darshan-dxt-parser`) and availab
 If you run DXT Explorer in Summit you need to load some modules:
 
 ```bash
-module load python r cairo
+module load darshan-util python r cairo
 ```
 
 ### Explore!
@@ -35,11 +35,11 @@ module load python r cairo
 Once you have the dependencies installed, you can run:
 
 ```bash
-python3 explore.py DARSHAN_FILE_COLLECTED_WITH_DXT_ENABLE.darshan
+./dxt-explore DARSHAN_FILE_COLLECTED_WITH_DXT_ENABLE.darshan
 ```
 
 ```bash
-usage: explore.py [-h] [-o OUTPUT] [-t] [-s] darshan
+usage: dxt-explorer [-h] [-o OUTPUT] [-t] [-s] [-d] [-l] [--start START] [--end END] [--from START_RANK] [--to END_RANK] [--browser] darshan
 
 DXT Explorer:
 
@@ -52,6 +52,13 @@ optional arguments:
                         Name of the output file
   -t, --transfer        Generate an interactive data transfer explorer
   -s, --spatiality      Generate an interactive spatiality explorer
+  -d, --debug           Enable debug mode
+  -l, --list            List all the files with trace
+  --start START         Report starts from X seconds (e.g., 3.7) from beginning of the job
+  --end END             Report ends at X seconds (e.g., 3.9) from beginning of the job
+  --from START_RANK     Report start from rank N
+  --to END_RANK         Report up to rank M
+  --browser             Open the browser with the generated plot
 ```
 
 DXT Explorer will generate by default a `explore.html` file with an interactive plot that you can open in any browser to explore. If you enabled the transfer or spatility plots, additional `.html` files will be generated, one for each type.
