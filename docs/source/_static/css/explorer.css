@@ -31,3 +31,11 @@ div.wy-menu-vertical a:hover {
 .admonition-title {
 	border-radius: 5px 5px 0 0;
 }
+
+.ethical-dark-theme a, .ethical-dark-theme a:visited {
+	color: #404040!important;
+}
+
+div .rst-versions {
+	color: #404040;
+}
