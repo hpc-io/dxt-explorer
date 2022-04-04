@@ -32,10 +32,10 @@ div.wy-menu-vertical a:hover {
 	border-radius: 5px 5px 0 0;
 }
 
-.ethical-dark-theme a, .ethical-dark-theme a:visited {
+div.ethical-dark-theme a, div.ethical-dark-theme a:visited {
 	color: #404040!important;
 }
 
-div .rst-versions {
+div.rst-versions {
 	color: #404040;
 }
