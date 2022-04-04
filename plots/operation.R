@@ -23,7 +23,8 @@ packages <- c(
     'plyr',
     'plotly',
     'rmarkdown',
-    'htmlwidgets'
+    'htmlwidgets',
+    'Cairo'
 )
 
 # Install packages not yet installed
@@ -86,13 +87,6 @@ option_list = list(
         default = NULL, 
         help = 'Name of the output file',
         metavar = 'output'
-    ),
-    make_option(
-        c('-u', '--html'),
-        type = 'logical',
-        default = TRUE, 
-        help = 'Generate a self-contained HTML file (requires pandoc)',
-        metavar = 'html'
     ),
     make_option(
         c('-x', '--identifier'),
