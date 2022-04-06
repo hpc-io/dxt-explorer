@@ -10,9 +10,9 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Setup Python
-        uses: actions/setup-python@v1
+        uses: actions/setup-python@v3
         with:
-          python-version: 3.7.4
+          python-version: '3.x'
           architecture: x64
 
       - name: Checkout DXT Explorer
