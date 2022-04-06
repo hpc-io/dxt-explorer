@@ -29,9 +29,9 @@ setuptools.setup(
     },
     package_data={
         'explore': [
-            'plots/operation.R',
-            'plots/transfer.R',
-            'plots/spatiality.R'
+            'explore/plots/operation.R',
+            'explore/plots/transfer.R',
+            'explore/plots/spatiality.R'
         ],
     },
     classifiers=[
