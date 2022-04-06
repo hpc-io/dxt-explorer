@@ -12,7 +12,7 @@ setuptools.setup(
     version="1.2",
     author="Jean Luca Bez, Suren Byna",
     author_email="jlbez@lbl.gov, sbyna@lbl.gov",
-    description="DXT Explorer is an interactive web-based log analysis tool to visualize Darshan DXT logs and help understand the I/O behavior of applications.",
+    description="DXT Explorer is an interactive web-based log analysis tool to visualize Darshan DXT logs and help understand the I/O behavior.",
     long_description=long_description,
     long_description_content_type="text/markdown",
     url="https://github.com/hpc-io/dxt-explorer",
