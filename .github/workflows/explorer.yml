@@ -2,7 +2,7 @@ name: DXT Explorer
 
 on:
   pull_request:
-
+  push:
   workflow_dispatch:
 
 jobs:
