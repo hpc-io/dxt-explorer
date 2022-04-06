@@ -1,0 +1,64 @@
+name: DXT Explorer 
+
+on:
+  pull_request:
+
+  workflow_dispatch:
+
+jobs:
+  explorer:
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+
+    steps:
+      - uses: actions/checkout@v2
+        with:
+          submodules: true
+
+      - name: Dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install cmake gcc libtool python3 r-base  -y
+          
+          # Darshan
+          git clone https://github.com/darshan-hpc/darshan.git
+
+      - name: Build Darshan
+        run: |
+          export DARSHAN_DIR=/opt/darshan
+
+          mkdir $DARSHAN_DIR
+          cd darshan
+          bash prepare.sh
+          cd darshan-util
+          ./configure --prefix=$DARSHAN_DIR
+          make
+          make install
+
+      - name: Install DXT Explorer
+        run: |
+          pip install -r requirements.txt
+          pip install --user .
+
+      - name: Run DXT Explorer (operation)
+        run: |
+          mkdir -p tests/operation
+          dxt-explorer --debug sample/jeanbez_8_benchmark_parallel_id45195555_8-6-50011-11681279140261054765_1628283217.darshan -o tests/operation 
+
+      - name: Run DXT Explorer (transfer)
+        run: |
+          mkdir -p tests/transfer
+          dxt-explorer --debug --transfer sample/jeanbez_8_benchmark_parallel_id45195555_8-6-50011-11681279140261054765_1628283217.darshan -o tests/transfer 
+
+      - name: Run DXT Explorer (spatiality)
+        run: |
+          mkdir -p tests/spatiality
+          dxt-explorer --debug --spatiality sample/jeanbez_8_benchmark_parallel_id45195555_8-6-50011-11681279140261054765_1628283217.darshan -o tests/spatiality
+
+      - name: Upload Artifact
+        if: always()
+        uses: actions/upload-artifact@v2
+        with:
+          name: test
+          path: tests/*
+          retention-days: 1
