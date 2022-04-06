@@ -40,25 +40,24 @@ jobs:
           pip install -r requirements.txt
           pip install --user .
 
+          mkdir -p tests
+
       - name: Run DXT Explorer (operation)
         run: |
-          mkdir -p tests/operation
-          dxt-explorer --debug sample/jeanbez_8_benchmark_parallel_id45195555_8-6-50011-11681279140261054765_1628283217.darshan -o tests/operation 
+          dxt-explorer --debug sample/jeanbez_8_benchmark_parallel_id45195555_8-6-50011-11681279140261054765_1628283217.darshan -o tests/operation.html
 
       - name: Run DXT Explorer (transfer)
         run: |
-          mkdir -p tests/transfer
-          dxt-explorer --debug --transfer sample/jeanbez_8_benchmark_parallel_id45195555_8-6-50011-11681279140261054765_1628283217.darshan -o tests/transfer 
+          dxt-explorer --debug --transfer sample/jeanbez_8_benchmark_parallel_id45195555_8-6-50011-11681279140261054765_1628283217.darshan -o tests/transfer.html 
 
       - name: Run DXT Explorer (spatiality)
         run: |
-          mkdir -p tests/spatiality
-          dxt-explorer --debug --spatiality sample/jeanbez_8_benchmark_parallel_id45195555_8-6-50011-11681279140261054765_1628283217.darshan -o tests/spatiality
+          dxt-explorer --debug --spatiality sample/jeanbez_8_benchmark_parallel_id45195555_8-6-50011-11681279140261054765_1628283217.darshan -o tests/spatiality.html
 
       - name: Upload Artifact
         if: always()
         uses: actions/upload-artifact@v2
         with:
           name: test
-          path: tests/*/*
+          path: tests/*
           retention-days: 1
