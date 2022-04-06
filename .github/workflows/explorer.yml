@@ -60,5 +60,5 @@ jobs:
         uses: actions/upload-artifact@v2
         with:
           name: test
-          path: tests/*
+          path: tests/*/*
           retention-days: 1
