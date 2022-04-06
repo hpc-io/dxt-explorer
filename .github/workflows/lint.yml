@@ -3,7 +3,8 @@ name: lint
 on:
   workflow_dispatch:
   push:
-
+    paths:
+      - "**.py"
 jobs:
   lint:
     name: Python Lint
@@ -15,9 +16,5 @@ jobs:
           python-version: "3.9"
       - name: Run flake8
         uses: julianwachholz/flake8-action@v2
-        with:
-          checkName: "Python Lint"
-          path: "explore/**.py"
-          config: tox.ini
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
