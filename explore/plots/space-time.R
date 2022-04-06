@@ -50,6 +50,24 @@ df$duration = df$end - df$start
 
 df$label = paste0('Rank: ', df$rank, '\nOperation: ', df$operation, '\nDuration: ', round(df$duration, digits = 3), ' seconds\nSize: ', (df$size / 1024), ' KB\nOffset: ', df$offset)
 
+# Include a zero record to ensure we can facet the plot
+df <- rbind(df, 
+    data.frame(
+        file_id = c(0, 0),
+        api = c('POSIX', 'POSIX'),
+        rank = c(0, 0),
+        operation = c('write', 'read'),
+        segment = c(0, 0),
+        offset = c(0, 0),
+        size = c(0, 0),
+        start = c(0, 0),
+        end = c(0, 0),
+        duration = c(0, 0),
+        label = c('', ''),
+        ost = c(NA, NA)
+    )
+)
+
 df$operation <- as.factor(df$operation)
 
 palette <- wes_palette('Zissou1', 100, type = 'continuous')
@@ -57,7 +75,7 @@ palette <- wes_palette('Zissou1', 100, type = 'continuous')
 maximum = max(df$end) + (max(df$end) * 0.01)
 
 plot_posix_write <- ggplot(
-    df[df$api == 'POSIX' & df$operation == 'write', ],
+    df[df$api == 'POSIX' & df$operation == 'read', ],
     aes(
         x = offset,
         ymin = start,
