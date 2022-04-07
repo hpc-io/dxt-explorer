@@ -43,6 +43,12 @@ jobs:
 
           mkdir -p tests
 
+      - name: Run DXT Explorer (list)
+        run: |
+          export PATH=/opt/darshan/bin:$PATH
+
+          dxt-explorer --debug --list sample/jeanbez_8_benchmark_parallel_id45195555_8-6-50011-11681279140261054765_1628283217.darshan
+
       - name: Run DXT Explorer (operation)
         run: |
           export PATH=/opt/darshan/bin:$PATH
