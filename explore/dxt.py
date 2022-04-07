@@ -395,8 +395,11 @@ class Explorer:
             for file_id, file_name in file_ids.items():
                 output_file = '{}.{}.transfer.html'.format(file, file_id)
 
-                command = '{}/plots/transfer.R -f {}.{}.dxt.csv -o {} -x {}'.format(
-                    self.get_directory(),
+                path = 'plots/transfer.R'
+                script = pkg_resources.resource_filename(__name__, path)
+
+                command = '{} -f {}.{}.dxt.csv -o {} -x {}'.format(
+                    script,
                     file,
                     file_id,
                     file,
@@ -441,8 +444,11 @@ class Explorer:
             for file_id, file_name in file_ids.items():
                 output_file = '{}.{}.spatiality.html'.format(file, file_id)
 
-                command = '{}/plots/spatiality.R -f {}.{}.dxt.csv -o {} -x {}'.format(
-                    self.get_directory(),
+                path = 'plots/spatiality.R'
+                script = pkg_resources.resource_filename(__name__, path)
+
+                command = '{} -f {}.{}.dxt.csv -o {} -x {}'.format(
+                    script,
                     file,
                     file_id,
                     output_file,
