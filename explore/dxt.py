@@ -402,8 +402,8 @@ class Explorer:
                     script,
                     file,
                     file_id,
-                    file,
-                    file_id
+                    output_file,
+                    file_name
                 )
 
                 args = shlex.split(command)

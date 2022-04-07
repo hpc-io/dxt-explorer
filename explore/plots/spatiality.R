@@ -52,8 +52,8 @@ option_list = list(
         c('-f', '--file'),
         type = 'character',
         default = NULL, 
-    help = 'DXT CSV file name',
-    metavar = 'file'
+        help = 'DXT CSV file name',
+        metavar = 'file'
     ),
     make_option(
         c('-o', '--output'),
