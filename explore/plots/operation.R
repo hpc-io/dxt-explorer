@@ -33,11 +33,11 @@ installed_packages <- packages %in% rownames(installed.packages())
 dir.create(path = Sys.getenv("R_LIBS_USER"), showWarnings = FALSE, recursive = TRUE)
 
 if (any(installed_packages == FALSE)) {
-    install.packages(packages[!installed_packages], repos='http://cran.us.r-project.org', quiet=FALSE, lib=Sys.getenv("R_LIBS_USER"))
+    install.packages(packages[!installed_packages], repos='http://cran.us.r-project.org', quiet=TRUE, lib=Sys.getenv("R_LIBS_USER"))
 }
 
 # Packages loading
-invisible(lapply(packages, library, warn.conflicts = FALSE, quietly = FALSE, character.only = TRUE))
+invisible(lapply(packages, library, warn.conflicts = FALSE, quietly = TRUE, character.only = TRUE))
 
 if (pandoc_available()) {
     self_contained = TRUE

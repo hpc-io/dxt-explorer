@@ -68,10 +68,10 @@ class Explorer:
         self.is_darshan_file(self.args.darshan)
         self.parse(self.args.darshan)
 
-        if self.args.output:
-            self.prefix = self.args.output
-        else:
+        if not self.args.prefix:
             self.prefix = os.getcwd()
+        else:
+            self.prefix = self.args.prefix
 
         if self.args.list_files:
             self.list_files(self.args.darshan)
@@ -506,6 +506,13 @@ def main():
         '--output',
         default=sys.stdout,
         type=argparse.FileType('w'),
+        help='Output directory'
+    )
+
+    PARSER.add_argument(
+        '-p',
+        '--prefix',
+        default=None,
         help='Output directory'
     )
 
