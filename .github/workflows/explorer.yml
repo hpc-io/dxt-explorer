@@ -25,13 +25,10 @@ jobs:
 
       - name: Build Darshan
         run: |
-          export DARSHAN_DIR=/opt/darshan
-
-          mkdir $DARSHAN_DIR
           cd darshan
           bash prepare.sh
           cd darshan-util
-          ./configure --prefix=$DARSHAN_DIR
+          ./configure
           make
           make install
 
