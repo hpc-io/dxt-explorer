@@ -87,6 +87,13 @@ option_list = list(
         default = NULL, 
         help = 'Name of the output file',
         metavar = 'output'
+    ),
+    make_option(
+        c('-x', '--identifier'),
+        type = 'character',
+        default = TRUE, 
+        help = 'Set the identifier of the original file captured by Darshan DXT',
+        metavar = 'identifier'
     )
 )
 
@@ -479,8 +486,7 @@ p_posix <- p_posix %>%
         title = paste0(
             'Explore <b>Data Transfer Size</b>',
             '<br>',
-            '<sup>',
-            basename(opt$file),
+            opt$identifier,
             '</sup>'
         )
     ) %>%
