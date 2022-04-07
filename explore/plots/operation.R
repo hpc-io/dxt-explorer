@@ -17,6 +17,7 @@
 # works, and perform publicly and display publicly, and to permit others to do so.
 
 packages <- c(
+    'png',
     'ggplot2',
     'optparse',
     'plyr',
