@@ -43,6 +43,12 @@ jobs:
 
           mkdir -p tests
 
+      - name: Run DXT Explorer (help)
+        run: |
+          export PATH=/opt/darshan/bin:$PATH
+
+          dxt-explorer -h
+
       - name: Run DXT Explorer (list)
         run: |
           export PATH=/opt/darshan/bin:$PATH

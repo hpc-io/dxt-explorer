@@ -81,6 +81,11 @@ class Explorer:
         if self.args.spatiality:
             self.generate_spatiality_plot(self.args.darshan)
 
+        if self.args.output:
+            self.prefix = self.args.spatiality
+        else:
+            self.prefix = os.getcwd()
+
     def get_directory(self):
         """Determine the install path to find the execution scripts."""
         try:
@@ -326,7 +331,7 @@ class Explorer:
 
         with alive_bar(total=len(file_ids), title='', spinner=None, enrich_print=False) as bar:
             for file_id, file_name in file_ids.items():
-                output_file = '{}.{}.operation.html'.format(file, file_id)
+                output_file = '{}/{}.{}.operation.html'.format(self.prefixm, file, file_id)
 
                 path = 'plots/operation.R'
                 script = pkg_resources.resource_filename(__name__, path)
@@ -393,7 +398,7 @@ class Explorer:
 
         with alive_bar(total=len(file_ids), title='', spinner=None, enrich_print=False) as bar:
             for file_id, file_name in file_ids.items():
-                output_file = '{}.{}.transfer.html'.format(file, file_id)
+                output_file = '{}/{}.{}.transfer.html'.format(self.prefix, file, file_id)
 
                 path = 'plots/transfer.R'
                 script = pkg_resources.resource_filename(__name__, path)
@@ -442,7 +447,7 @@ class Explorer:
 
         with alive_bar(total=len(file_ids), title='', spinner=None, enrich_print=False) as bar:
             for file_id, file_name in file_ids.items():
-                output_file = '{}.{}.spatiality.html'.format(file, file_id)
+                output_file = '{}/{}.{}.spatiality.html'.format(self.prefix, file, file_id)
 
                 path = 'plots/spatiality.R'
                 script = pkg_resources.resource_filename(__name__, path)
@@ -501,7 +506,7 @@ def main():
         '--output',
         default=sys.stdout,
         type=argparse.FileType('w'),
-        help='Name of the output file'
+        help='Output directory'
     )
 
     PARSER.add_argument(

@@ -24,7 +24,8 @@ packages <- c(
     'plotly',
     'rmarkdown',
     'htmlwidgets',
-    'wesanderson'
+    'wesanderson',
+    'Cairo'
 )
 
 # Install packages not yet installed
@@ -486,6 +487,7 @@ p_posix <- p_posix %>%
         title = paste0(
             'Explore <b>Data Transfer Size</b>',
             '<br>',
+            '<sup>',
             opt$identifier,
             '</sup>'
         )

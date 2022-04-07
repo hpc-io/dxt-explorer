@@ -24,7 +24,6 @@ packages <- c(
     'plotly',
     'rmarkdown',
     'htmlwidgets',
-    'rmarkdown',
     'wesanderson',
     'Cairo'
 )
