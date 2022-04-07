@@ -17,10 +17,9 @@ jobs:
 
       - name: Dependencies
         run: |
-          sudo apt-get update
           sudo add-apt-repository ppa:deadsnakes/ppa -y
+          sudo apt-get update
           sudo apt-get install cmake gcc libtool python3.9 r-base software-properties-common  -y
-          sudo update-alternatives --set python /usr/bin/python3.9
           
           # Darshan
           git clone https://github.com/darshan-hpc/darshan.git
