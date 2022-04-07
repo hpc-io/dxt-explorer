@@ -273,7 +273,7 @@ class Explorer:
     def subset_dataset(self, file, file_ids):
         self.logger.info('generating datasets')
 
-        with alive_bar(total=len(file_ids), title='', spinner=None, enrich_print=False) as bar:
+        with alive_bar(total=len(file_ids), title='', stats=False, spinner=None, enrich_print=False) as bar:
             for file_id in file_ids:
                 subset_dataset_file = '{}.{}'.format(file, file_id)
 
@@ -329,7 +329,7 @@ class Explorer:
         # Generated the CSV files for each plot
         self.subset_dataset(file, file_ids)
 
-        with alive_bar(total=len(file_ids), title='', spinner=None, enrich_print=False) as bar:
+        with alive_bar(total=len(file_ids), title='', stats=False, spinner=None, enrich_print=False) as bar:
             for file_id, file_name in file_ids.items():
                 output_file = '{}/{}.{}.operation.html'.format(self.prefix, file, file_id)
 
@@ -396,7 +396,7 @@ class Explorer:
         # Generated the CSV files for each plot
         self.subset_dataset(file, file_ids)
 
-        with alive_bar(total=len(file_ids), title='', spinner=None, enrich_print=False) as bar:
+        with alive_bar(total=len(file_ids), title='', stats=False, spinner=None, enrich_print=False) as bar:
             for file_id, file_name in file_ids.items():
                 output_file = '{}/{}.{}.transfer.html'.format(self.prefix, file, file_id)
 
@@ -445,7 +445,7 @@ class Explorer:
         # Generated the CSV files for each plot
         self.subset_dataset(file, file_ids)
 
-        with alive_bar(total=len(file_ids), title='', spinner=None, enrich_print=False) as bar:
+        with alive_bar(total=len(file_ids), title='', stats=False, spinner=None, enrich_print=False) as bar:
             for file_id, file_name in file_ids.items():
                 output_file = '{}/{}.{}.spatiality.html'.format(self.prefix, file, file_id)
 
