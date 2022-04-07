@@ -28,14 +28,7 @@ import subprocess
 import webbrowser
 import logging
 import logging.handlers
-
-try:
-    # Python < 3.8
-    # Python < 3.9
-    import importlib_resources
-except ImportError:
-    import importlib.resources as importlib_resources
-
+import pkg_resources
 
 from distutils.spawn import find_executable
 from alive_progress import alive_bar
@@ -335,14 +328,11 @@ class Explorer:
             for file_id, file_name in file_ids.items():
                 output_file = '{}.{}.operation.html'.format(file, file_id)
 
-                pkg = importlib_resources.files('explore')
-                pkg_data_file = pkg / 'plots' / 'operation.R'
+                path = 'plots/operation.R'
+                script = pkg_resources.resource_filename(__name__, path)
 
-                with importlib_resources.as_file(pkg_data_file) as path:
-                    print(path)
-
-                command = '{}/plots/operation.R -f {}.{}.dxt.csv {} -o {} -x {}'.format(
-                    self.get_directory(),
+                command = '{} -f {}.{}.dxt.csv {} -o {} -x {}'.format(
+                    script,
                     file,
                     file_id,
                     limits,
