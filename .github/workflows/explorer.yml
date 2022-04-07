@@ -25,10 +25,13 @@ jobs:
 
       - name: Build Darshan
         run: |
+          export DARSHAN_DIR=/opt/darshan
+
+          mkdir $DARSHAN_DIR
           cd darshan
           bash prepare.sh
           cd darshan-util
-          ./configure
+          ./configure --prefix=$DARSHAN_DIR
           make
           make install
 
@@ -41,14 +44,20 @@ jobs:
 
       - name: Run DXT Explorer (operation)
         run: |
+          export PATH=/opt/darshan/bin:$PATH
+
           dxt-explorer --debug sample/jeanbez_8_benchmark_parallel_id45195555_8-6-50011-11681279140261054765_1628283217.darshan -o tests/operation.html
 
       - name: Run DXT Explorer (transfer)
         run: |
+          export PATH=/opt/darshan/bin:$PATH
+
           dxt-explorer --debug --transfer sample/jeanbez_8_benchmark_parallel_id45195555_8-6-50011-11681279140261054765_1628283217.darshan -o tests/transfer.html 
 
       - name: Run DXT Explorer (spatiality)
         run: |
+          export PATH=/opt/darshan/bin:$PATH
+
           dxt-explorer --debug --spatiality sample/jeanbez_8_benchmark_parallel_id45195555_8-6-50011-11681279140261054765_1628283217.darshan -o tests/spatiality.html
 
       - name: Upload Artifact
