@@ -29,7 +29,13 @@ import webbrowser
 import logging
 import logging.handlers
 
-import importlib.resources as importlib_resources
+try:
+    # Python < 3.8
+    # Python < 3.9
+    import importlib_resources
+except ImportError:
+    import importlib.resources as importlib_resources
+
 
 from distutils.spawn import find_executable
 from alive_progress import alive_bar
