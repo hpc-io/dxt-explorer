@@ -351,7 +351,7 @@ class Explorer:
                     if os.path.exists(output_file):
                         self.logger.info('SUCCESS: {}'.format(output_file))
                     else:
-                        self.logger.error('no data to generate interactive plots')
+                        self.logger.warning('no data to generate interactive plots')
 
                     if self.args.browser:
                         webbrowser.open('file://{}'.format(output_file), new=2)
@@ -367,8 +367,6 @@ class Explorer:
                         for item in s.stderr.decode().split('\n'):
                             if item.strip() != '':
                                 self.logger.error(item)
-
-                    exit(-1)
 
                 bar()
 
@@ -433,8 +431,6 @@ class Explorer:
                             if item.strip() != '':
                                 self.logger.error(item)
 
-                    exit(-1)
-
                 bar()
 
     def generate_spatiality_plot(self, file):
@@ -486,8 +482,6 @@ class Explorer:
                         for item in s.stderr.decode().split('\n'):
                             if item.strip() != '':
                                 self.logger.error(item)
-
-                    exit(-1)
 
                 bar()
 
