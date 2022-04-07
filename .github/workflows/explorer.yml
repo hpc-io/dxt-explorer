@@ -7,7 +7,7 @@ on:
 
 jobs:
   explorer:
-    runs-on: debian-latest
+    runs-on: debian
     timeout-minutes: 60
 
     steps:
@@ -17,8 +17,8 @@ jobs:
 
       - name: Dependencies
         run: |
-          sudo apt-get update
-          sudo apt-get install cmake gcc libtool python3 r-base software-properties-common  -y
+          apt-get update
+          apt-get install cmake gcc libtool python3 r-base software-properties-common  -y
           
           # Darshan
           git clone https://github.com/darshan-hpc/darshan.git
