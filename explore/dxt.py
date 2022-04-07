@@ -68,6 +68,11 @@ class Explorer:
         self.is_darshan_file(self.args.darshan)
         self.parse(self.args.darshan)
 
+        if self.args.output:
+            self.prefix = self.args.output
+        else:
+            self.prefix = os.getcwd()
+
         if self.args.list_files:
             self.list_files(self.args.darshan)
 
@@ -80,11 +85,6 @@ class Explorer:
 
         if self.args.spatiality:
             self.generate_spatiality_plot(self.args.darshan)
-
-        if self.args.output:
-            self.prefix = self.args.spatiality
-        else:
-            self.prefix = os.getcwd()
 
     def get_directory(self):
         """Determine the install path to find the execution scripts."""
