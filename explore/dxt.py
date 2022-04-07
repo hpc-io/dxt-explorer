@@ -331,7 +331,7 @@ class Explorer:
 
         with alive_bar(total=len(file_ids), title='', spinner=None, enrich_print=False) as bar:
             for file_id, file_name in file_ids.items():
-                output_file = '{}/{}.{}.operation.html'.format(self.prefixm, file, file_id)
+                output_file = '{}/{}.{}.operation.html'.format(self.prefix, file, file_id)
 
                 path = 'plots/operation.R'
                 script = pkg_resources.resource_filename(__name__, path)
