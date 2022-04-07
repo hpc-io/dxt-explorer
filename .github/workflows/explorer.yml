@@ -41,7 +41,7 @@ jobs:
           pip install -r requirements.txt
           pip install .
 
-          mkdir -p tests
+          mkdir -p /tmp/tests
 
       - name: Run DXT Explorer (help)
         run: |
@@ -59,24 +59,24 @@ jobs:
         run: |
           export PATH=/opt/darshan/bin:$PATH
 
-          dxt-explorer --debug --prefix tests/ sample/jeanbez_8_benchmark_parallel_id45195555_8-6-50011-11681279140261054765_1628283217.darshan
+          dxt-explorer --debug --prefix /tmp/tests sample/jeanbez_8_benchmark_parallel_id45195555_8-6-50011-11681279140261054765_1628283217.darshan
 
       - name: Run DXT Explorer (transfer)
         run: |
           export PATH=/opt/darshan/bin:$PATH
 
-          dxt-explorer --debug --transfer --prefix tests/ sample/jeanbez_8_benchmark_parallel_id45195555_8-6-50011-11681279140261054765_1628283217.darshan 
+          dxt-explorer --debug --transfer --prefix /tmp/tests sample/jeanbez_8_benchmark_parallel_id45195555_8-6-50011-11681279140261054765_1628283217.darshan 
 
       - name: Run DXT Explorer (spatiality)
         run: |
           export PATH=/opt/darshan/bin:$PATH
 
-          dxt-explorer --debug --spatiality --prefix tests/ sample/jeanbez_8_benchmark_parallel_id45195555_8-6-50011-11681279140261054765_1628283217.darshan
+          dxt-explorer --debug --spatiality --prefix /tmp/tests sample/jeanbez_8_benchmark_parallel_id45195555_8-6-50011-11681279140261054765_1628283217.darshan
 
       - name: Upload Artifact
         if: always()
         uses: actions/upload-artifact@v2
         with:
           name: tests
-          path: tests/*
+          path: /tmp/tests/
           retention-days: 1
