@@ -7,9 +7,7 @@ on:
 
 jobs:
   explorer:
-    runs-on: ubuntu-latest
-    container:
-      image: jlbez/dxt-explorer-ubuntu-20.04
+    container: jlbez/dxt-explorer-ubuntu-20.04
     timeout-minutes: 60
 
     steps:
