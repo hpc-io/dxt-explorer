@@ -42,7 +42,7 @@ jobs:
           pip install -r requirements.txt
           pip install .
 
-      - nome: Install R Dependencies
+      - name: Install R Dependencies
         run: |
           ../../explore/dependencies.R
 
