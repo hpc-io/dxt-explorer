@@ -42,6 +42,10 @@ jobs:
           pip install -r requirements.txt
           pip install .
 
+      - nome: Install R Dependencies
+        run: |
+          ../../explore/dependencies.R
+
       - name: Run DXT Explorer (help)
         run: |
           export PATH=/opt/darshan/bin:$PATH
