@@ -42,3 +42,11 @@ DXT Explorer will generate by default a ``explore.html`` file with an interactiv
    2021-10-05 03:21:54,657 explore - INFO - SUCCESS
 
 You can find a couple of interactive examples of DXT traces collected from FLASH, E2E, and OpenPMD in the `companion repository <https://jeanbez.gitlab.io/pdsw-2021>`_ for our PDSW'21 paper.
+
+.. note::
+
+   If you do not want to install DXT Explorer but rather prefer to run it as a standalone script, you can use the following command to launch it. However, remember that you are still required to install all dependencies.
+
+   .. code-block:: bash
+   
+      python3 explore/dxt.py YOUR-DXT-TRACE.darshan
