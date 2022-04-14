@@ -37,6 +37,6 @@ div.rst-versions span.rst-current-version {
 	color: #344f90;
 }
 
-div.rst-versions span {
-	color: #404040;
+div.rst-versions span.fa {
+	color: #404040!important;
 }
