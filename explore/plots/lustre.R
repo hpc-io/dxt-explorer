@@ -21,10 +21,7 @@ packages <- c(
 	'optparse',
 	'plyr',
 	'plotly',
-	'htmlwidgets',
-	'rmarkdown',
-	'wesanderson',
-	'Cairo'
+	'htmlwidgets'
 )
 
 # Install packages not yet installed
@@ -38,12 +35,6 @@ if (any(installed_packages == FALSE)) {
 
 # Packages loading
 invisible(lapply(packages, library, character.only = TRUE))
-
-if (pandoc_available()) {
-    self_contained = TRUE
-} else {
-    self_contained = FALSE
-}
 
 option_list = list(
   	make_option(
@@ -62,34 +53,34 @@ df <- read.csv(file=opt$file, sep = ',')
 
 df$duration = df$end - df$start
 
-df$label = paste0('Rank: ', df$rank, '\nOperation: ', df$operation, '\nDuration: ', round(df$duration, digits = 3), ' seconds\nSize: ', (df$size / 1024), ' KB')
+# Include a zero record to ensure we can facet the plot
+df <- rbind(df, 
+	data.frame(
+		file_id = c(0, 0, 0, 0),
+		api = c('POSIX', 'POSIX', 'MPIIO', 'MPIIO'),
+		rank = c(0, 0, 0, 0),
+		operation = c('write', 'read', 'write', 'read'),
+		segment = c(0, 0, 0, 0),
+		offset = c(0, 0, 0, 0),
+		size = c(0, 0, 0, 0),
+		start = c(0, 0, 0, 0),
+		end = c(0, 0, 0, 0),
+		duration = c(0, 0, 0, 0),
+		ost = c(NA, NA, NA, NA)
+	)
+)
 
 df$operation <- as.factor(df$operation)
 
-palette <- wes_palette('Zissou1', 100, type = 'continuous')
+df$rate <- (df$size / 1024 / 1024 / 1024) / df$duration
 
-maximum = max(df$end) + (max(df$end) * 0.01)
-
-plot_posix <- ggplot(
-	df[df$api == 'POSIX', ],
+plot_posix_write <- ggplot(
+	df[df$api == 'POSIX' & df$operation == 'write', ],
 	aes(
-		x = start,
-		xend = end,
-		y = rank,
-		yend = rank,
-		color = size,
-		text = label
+		x = as.factor(ost),
+		y = rate
 	)) +
-	geom_segment() +
-	scale_x_continuous(breaks = seq(0, maximum, length.out = 10)) +
-	facet_grid(api ~ .) +
-	scale_color_gradientn(
-		'Request size\n(bytes)',
-		colours = palette
-	) +  
-	expand_limits(x = 0) +
-	xlab('Time') +
-	ylab('Rank #') +
+	geom_boxplot() +
 	theme_bw() +
 	theme(
 		legend.position = "top",
@@ -97,26 +88,13 @@ plot_posix <- ggplot(
 		strip.background = element_rect(colour = NA, fill = NA)
 	)
 
-plot_mpiio <- ggplot(
-	df[df$api == 'MPIIO', ],
+plot_posix_read <- ggplot(
+	df[df$api == 'POSIX' & df$operation == 'read' & !is.nan(df$rate), ],
 	aes(
-		x = start,
-		xend = end,
-		y = rank,
-		yend = rank,
-		color = size,
-		text = label
+		x = as.factor(ost),
+		y = rate
 	)) +
-	geom_segment() +
-	scale_x_continuous(breaks = seq(0, maximum, length.out = 10)) +
-	facet_grid(api ~ .) +
-	scale_color_gradientn(
-		'Request size\n(bytes)',
-		colours = palette
-	) +  
-	expand_limits(x = 0) +
-	xlab('Time') +
-	ylab('Rank #') +
+	geom_boxplot() +
 	theme_bw() +
 	theme(
 		legend.position = "top",
@@ -124,49 +102,45 @@ plot_mpiio <- ggplot(
 		strip.background = element_rect(colour = NA, fill = NA)
 	)
 
-p_posix <- ggplotly(
-		plot_posix,
+p_posix_write <- ggplotly(
+		plot_posix_write,
 		width = 1800,
 		height = 1000,
 		tooltip = "text",
-		legendgroup = operation,
 		dynamicTicks = TRUE
 	) %>%
-	rangeslider(min(df$start), max(df$end), thickness = 0.03) %>%
 	layout(
 		margin = list(pad = 0),
-		legend = list(orientation = "h", x = 0, y = length(df$ranks) + 6),
 		autosize = TRUE,
-		xaxis = list(title = 'Runtime (seconds)', matches = 'x'),
-		yaxis = list(title = 'Rank', matches = 'y', fixedrange = FALSE),
-		hoverlabel = list(font = list(color = 'white')),
-		title = '<b>DXT Explorer</b> Transfer Size'
+		xaxis = list(title = 'Lustre OST', matches = 'x'),
+		yaxis = list(title = 'I/O ratio (GB/s)', matches = 'y', fixedrange = FALSE),
+		title = '<b>DXT Explorer</b> Lustre OST'
 	) %>%
 	style(
     		showlegend = FALSE
 	) %>%
 	toWebGL()
 
-p_mpiio <- ggplotly(
-		plot_mpiio,
+p_posix_read <- ggplotly(
+		plot_posix_read,
 		width = 1800,
 		height = 1000,
 		tooltip = "text",
-		legendgroup = operation,
 		dynamicTicks = TRUE
 	) %>%
 	layout(
 		margin = list(pad = 0),
-		legend = list(orientation = "h", x = 0, y = length(df$ranks) + 6),
 		autosize = TRUE,
-		xaxis = list(matches = 'x'),
-		yaxis = list(title = 'Rank', matches = 'y', fixedrange = FALSE),
-		hoverlabel = list(font = list(color = 'white'))
+		xaxis = list(title = 'Lustre OST', matches = 'x'),
+		yaxis = list(title = 'I/O ratio (GB/s)', matches = 'y', fixedrange = FALSE)
+	) %>%
+	style(
+    		showlegend = FALSE
 	) %>%
 	toWebGL()
 
 p <- subplot(
-	p_mpiio, p_posix,
+	p_posix_write, p_posix_read,
 	nrows = 2,
 	titleY = TRUE,
 	titleX = TRUE,
@@ -174,4 +148,4 @@ p <- subplot(
 	shareY = TRUE
 )
 
-saveWidget(p, selfcontained = self_contained, 'explore-transfer.html')
+saveWidget(p, selfcontained = TRUE, 'explore-lustre.html')

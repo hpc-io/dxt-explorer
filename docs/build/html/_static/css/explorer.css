@@ -22,7 +22,6 @@ div.wy-menu-vertical a:hover {
 
 .rst-content div[class^=highlight], .rst-content pre.literal-block {
 	border-radius: 5px;
-  background: #efefef;
 }
 
 .admonition note {
@@ -31,20 +30,4 @@ div.wy-menu-vertical a:hover {
 
 .admonition-title {
 	border-radius: 5px 5px 0 0;
-}
-
-div.rst-versions span.rst-current-version {
-	color: #344f90;
-}
-
-div.rst-versions span.fa {
-	color: #404040!important;
-}
-
-div.ethical-dark-theme a, div.ethical-dark-theme a:visited {
-	color: #404040!important;
-}
-
-div.rst-versions {
-	color: #404040;
 }
