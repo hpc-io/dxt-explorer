@@ -29,6 +29,7 @@ setuptools.setup(
     },
     package_data={
         'explore': [
+            'explore/plots/dxt-explorer.png',
             'explore/plots/operation.R',
             'explore/plots/transfer.R',
             'explore/plots/spatiality.R'
