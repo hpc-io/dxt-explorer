@@ -331,7 +331,7 @@ class Explorer:
 
         with alive_bar(total=len(file_ids), title='', stats=False, spinner=None, enrich_print=False) as bar:
             for file_id, file_name in file_ids.items():
-                output_file = '{}/{}.{}.operation.html'.format(self.prefix, file, file_id)
+                output_file = '{}/{}-{}.html'.format(self.prefix, file_id, 'operation')
 
                 path = 'plots/operation.R'
                 script = pkg_resources.resource_filename(__name__, path)
@@ -398,7 +398,7 @@ class Explorer:
 
         with alive_bar(total=len(file_ids), title='', stats=False, spinner=None, enrich_print=False) as bar:
             for file_id, file_name in file_ids.items():
-                output_file = '{}/{}.{}.transfer.html'.format(self.prefix, file, file_id)
+                output_file = '{}/{}-{}.html'.format(self.prefix, file_id, 'transfer')
 
                 path = 'plots/transfer.R'
                 script = pkg_resources.resource_filename(__name__, path)
@@ -447,7 +447,7 @@ class Explorer:
 
         with alive_bar(total=len(file_ids), title='', stats=False, spinner=None, enrich_print=False) as bar:
             for file_id, file_name in file_ids.items():
-                output_file = '{}/{}.{}.spatiality.html'.format(self.prefix, file, file_id)
+                output_file = '{}/{}-{}.html'.format(self.prefix, file_id, 'spatiality')
 
                 path = 'plots/spatiality.R'
                 script = pkg_resources.resource_filename(__name__, path)

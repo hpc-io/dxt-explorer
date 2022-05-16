@@ -1,2 +1,3 @@
 include requirements.txt
 include explore/plots/*.R
+include explore/plots/*.png

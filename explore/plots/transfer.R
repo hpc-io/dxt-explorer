@@ -25,6 +25,7 @@ packages <- c(
     'rmarkdown',
     'htmlwidgets',
     'wesanderson',
+    'R.utils',
     'Cairo'
 )
 
@@ -100,6 +101,15 @@ option_list = list(
 
 opt_parser = OptionParser(option_list=option_list)
 opt = parse_args(opt_parser)
+
+base = commandArgs()
+base = base[grepl('--file', base, fixed=TRUE)]
+if (!is.null(base)) {
+    base = strsplit(base, split='=')
+    base = sapply(base, tail, 1)
+}
+
+base = dirname(base)
 
 df <- read.csv(file=opt$file, sep = ',')
 
@@ -589,7 +599,7 @@ p <- subplot(
 layout (
     margin = list(t = 130),
     images = list(
-        source = raster2uri(as.raster(readPNG('dxt-explorer.png'))),
+        source = raster2uri(as.raster(readPNG(paste(base, 'dxt-explorer.png', sep = '/')))),
         x = 0,
         y = 1.02, 
         sizex = 0.2,
