@@ -34,21 +34,19 @@ from distutils.spawn import find_executable
 from alive_progress import alive_bar
 
 
-class Explorer:
+class DXT:
 
-    def __init__(self, args):
+    def __init__(self, debug=None):
         """Initialize the explorer."""
-        self.args = args
-
-        self.configure_log()
+        self.configure_log(debug)
         self.has_dxt_parser()
         self.has_r_support()
 
-    def configure_log(self):
+    def configure_log(self, debug):
         """Configure the logging system."""
         self.logger = logging.getLogger('DXT Explorer')
 
-        if self.args.debug:
+        if debug:
             self.logger.setLevel(logging.DEBUG)
         else:
             self.logger.setLevel(logging.INFO)
@@ -64,27 +62,21 @@ class Explorer:
 
         self.logger.addHandler(console)
 
-    def run(self):
-        self.is_darshan_file(self.args.darshan)
-        self.parse(self.args.darshan)
+    def run(self, prefix=None, darshan=None, transfer=False, spatiality=False, start=None, end=None, start_rank=None, end_rank=None, browser=False):
+        """Call the functions to generate the interactive plots."""
+        self.is_darshan_file(darshan)
+        self.parse(darshan)
 
-        if not self.args.prefix:
-            self.prefix = os.getcwd()
-        else:
-            self.prefix = self.args.prefix
+        if not prefix:
+            prefix = os.getcwd()
 
-        if self.args.list_files:
-            self.list_files(self.args.darshan)
+        self.generate_plot(prefix, darshan)
 
-            exit()
+        if transfer:
+            self.generate_transfer_plot(prefix, darshan)
 
-        self.generate_plot(self.args.darshan)
-
-        if self.args.transfer:
-            self.generate_transfer_plot(self.args.darshan)
-
-        if self.args.spatiality:
-            self.generate_spatiality_plot(self.args.darshan)
+        if spatiality:
+            self.generate_spatiality_plot(prefix, darshan)
 
     def get_directory(self):
         """Determine the install path to find the execution scripts."""
@@ -99,15 +91,15 @@ class Explorer:
 
     def is_darshan_file(self, file):
         """Check if the provided file exists and is a .darshan file."""
-        if not os.path.exists(self.args.darshan):
+        if not os.path.exists(file):
             self.logger.error('{}: NOT FOUND'.format(file))
 
-            exit(-1)
+            sys.exit(os.EX_NOINPUT)
 
-        if not self.args.darshan.endswith('.darshan'):
+        if not file.endswith('.darshan'):
             self.logger.error('{} is not a .darshan file'.format(file))
 
-            exit(-1)
+            sys.exit(os.DATAERR)
 
     def has_dxt_parser(self):
         """Check if `darshan-dxt-parser` is on PATH."""
@@ -116,7 +108,7 @@ class Explorer:
         else:
             self.logger.error('darshan-dxt-parser: NOT FOUND')
 
-            exit(-1)
+            sys.exit(os.EX_UNAVAILABLE)
 
     def has_r_support(self):
         """Check if `Rscript` is on PATH."""
@@ -125,7 +117,7 @@ class Explorer:
         else:
             self.logger.error('Rscript: NOT FOUND')
 
-            exit(-1)
+            sys.exit(os.EX_UNAVAILABLE)
 
     def dxt(self, file):
         """Parse the Darshan file to generate the .dxt trace file."""
@@ -308,21 +300,21 @@ class Explorer:
 
                 bar()
 
-    def generate_plot(self, file):
+    def generate_plot(self, prefix, file, start=None, end=None, start_rank=None, end_rank=None, browser=False):
         """Generate an interactive operation plot."""
         limits = ''
 
-        if self.args.start:
-            limits += ' -s {} '.format(self.args.start)
+        if start:
+            limits += ' -s {} '.format(start)
 
-        if self.args.end:
-            limits += ' -e {} '.format(self.args.end)
+        if end:
+            limits += ' -e {} '.format(end)
 
-        if self.args.start_rank:
-            limits += ' -n {} '.format(self.args.start_rank)
+        if start_rank:
+            limits += ' -n {} '.format(start_rank)
 
-        if self.args.end_rank:
-            limits += ' -m {} '.format(self.args.end_rank)
+        if end_rank:
+            limits += ' -m {} '.format(end_rank)
 
         file_ids = self.list_files(file)
 
@@ -331,7 +323,7 @@ class Explorer:
 
         with alive_bar(total=len(file_ids), title='', stats=False, spinner=None, enrich_print=False) as bar:
             for file_id, file_name in file_ids.items():
-                output_file = '{}/{}.{}.operation.html'.format(self.prefix, file, file_id)
+                output_file = '{}/{}.{}.operation.html'.format(prefix, file, file_id)
 
                 path = 'plots/operation.R'
                 script = pkg_resources.resource_filename(__name__, path)
@@ -358,7 +350,7 @@ class Explorer:
                     else:
                         self.logger.warning('no data to generate interactive plots')
 
-                    if self.args.browser:
+                    if browser:
                         webbrowser.open('file://{}'.format(output_file), new=2)
                 else:
                     self.logger.error('failed to generate the interactive plots (error %s)', s.returncode)
@@ -375,21 +367,21 @@ class Explorer:
 
                 bar()
 
-    def generate_transfer_plot(self, file):
+    def generate_transfer_plot(self, prefix, file, start=None, end=None, start_rank=None, end_rank=None, browser=False):
         """Generate an interactive transfer plot."""
         limits = ''
 
-        if self.args.start:
-            limits += ' -s {} '.format(self.args.start)
+        if start:
+            limits += ' -s {} '.format(start)
 
-        if self.args.end:
-            limits += ' -e {} '.format(self.args.end)
+        if end:
+            limits += ' -e {} '.format(end)
 
-        if self.args.start_rank:
-            limits += ' -n {} '.format(self.args.start_rank)
+        if start_rank:
+            limits += ' -n {} '.format(start_rank)
 
-        if self.args.end_rank:
-            limits += ' -m {} '.format(self.args.end_rank)
+        if end_rank:
+            limits += ' -m {} '.format(end_rank)
 
         file_ids = self.list_files(file)
 
@@ -398,7 +390,7 @@ class Explorer:
 
         with alive_bar(total=len(file_ids), title='', stats=False, spinner=None, enrich_print=False) as bar:
             for file_id, file_name in file_ids.items():
-                output_file = '{}/{}.{}.transfer.html'.format(self.prefix, file, file_id)
+                output_file = '{}/{}.{}.transfer.html'.format(prefix, file, file_id)
 
                 path = 'plots/transfer.R'
                 script = pkg_resources.resource_filename(__name__, path)
@@ -421,7 +413,7 @@ class Explorer:
                 if s.returncode == 0:
                     self.logger.info('SUCCESS: {}'.format(output_file))
 
-                    if self.args.browser:
+                    if browser:
                         webbrowser.open('file://{}.{}.transfer.html'.format(file, file_id), new=2)
                 else:
                     self.logger.error('failed to generate the interactive plots (error %s)', s.returncode)
@@ -438,7 +430,7 @@ class Explorer:
 
                 bar()
 
-    def generate_spatiality_plot(self, file):
+    def generate_spatiality_plot(self, prefix, file, browser=False):
         """Generate an interactive spatiality plot."""
         file_ids = self.list_files(file)
 
@@ -447,7 +439,7 @@ class Explorer:
 
         with alive_bar(total=len(file_ids), title='', stats=False, spinner=None, enrich_print=False) as bar:
             for file_id, file_name in file_ids.items():
-                output_file = '{}/{}.{}.spatiality.html'.format(self.prefix, file, file_id)
+                output_file = '{}/{}.{}.spatiality.html'.format(prefix, file, file_id)
 
                 path = 'plots/spatiality.R'
                 script = pkg_resources.resource_filename(__name__, path)
@@ -473,7 +465,7 @@ class Explorer:
                     else:
                         self.logger.warning('no data to generate spatiality plots')
 
-                    if self.args.browser:
+                    if browser:
                         webbrowser.open('file://{}'.format(output_file), new=2)
                 else:
                     self.logger.error('failed to generate the spatiality plots (error %s)', s.returncode)
@@ -492,16 +484,16 @@ class Explorer:
 
 
 def main():
-    PARSER = argparse.ArgumentParser(
+    parser = argparse.ArgumentParser(
         description='DXT Explorer: '
     )
 
-    PARSER.add_argument(
+    parser.add_argument(
         'darshan',
         help='Input .darshan file'
     )
 
-    PARSER.add_argument(
+    parser.add_argument(
         '-o',
         '--output',
         default=sys.stdout,
@@ -509,14 +501,14 @@ def main():
         help='Output directory'
     )
 
-    PARSER.add_argument(
+    parser.add_argument(
         '-p',
         '--prefix',
         default=None,
         help='Output directory'
     )
 
-    PARSER.add_argument(
+    parser.add_argument(
         '-t',
         '--transfer',
         default=False,
@@ -524,7 +516,7 @@ def main():
         help='Generate an interactive data transfer explorer'
     )
 
-    PARSER.add_argument(
+    parser.add_argument(
         '-s',
         '--spatiality',
         default=False,
@@ -532,7 +524,7 @@ def main():
         help='Generate an interactive spatiality explorer'
     )
 
-    PARSER.add_argument(
+    parser.add_argument(
         '-d',
         '--debug',
         action='store_true',
@@ -540,7 +532,7 @@ def main():
         help='Enable debug mode'
     )
 
-    PARSER.add_argument(
+    parser.add_argument(
         '-l',
         '--list',
         action='store_true',
@@ -548,35 +540,35 @@ def main():
         help='List all the files with trace'
     )
 
-    PARSER.add_argument(
+    parser.add_argument(
         '--start',
         action='store',
         dest='start',
         help='Report starts from X seconds (e.g., 3.7) from beginning of the job'
     )
 
-    PARSER.add_argument(
+    parser.add_argument(
         '--end',
         action='store',
         dest='end',
         help='Report ends at X seconds (e.g., 3.9) from beginning of the job'
     )
 
-    PARSER.add_argument(
+    parser.add_argument(
         '--from',
         action='store',
         dest='start_rank',
         help='Report start from rank N'
     )
 
-    PARSER.add_argument(
+    parser.add_argument(
         '--to',
         action='store',
         dest='end_rank',
         help='Report up to rank M'
     )
 
-    PARSER.add_argument(
+    parser.add_argument(
         '--browser',
         default=False,
         action='store_true',
@@ -584,10 +576,16 @@ def main():
         help='Open the browser with the generated plot'
     )
 
-    ARGS = PARSER.parse_args()
+    args = parser.parse_args()
 
-    EXPLORE = Explorer(ARGS)
-    EXPLORE.run()
+    explore = DXT(args.debug)
+
+    if args.list_files:
+        explore.list_files(args.darshan)
+
+        sys.exit(os.EX_OK)
+
+    explore.run(args.prefix, args.darshan, args.transfer, args.spatiality, args.start, args.end, args.start_rank, args.end_rank, args.browser)
 
 
 if __name__ == '__main__':
