@@ -31,7 +31,6 @@ import logging.handlers
 import pkg_resources
 
 from distutils.spawn import find_executable
-from alive_progress import alive_bar
 
 
 class DXT:
@@ -265,40 +264,36 @@ class DXT:
     def subset_dataset(self, file, file_ids):
         self.logger.info('generating datasets')
 
-        with alive_bar(total=len(file_ids), title='', stats=False, spinner=None, enrich_print=False) as bar:
-            for file_id in file_ids:
-                subset_dataset_file = '{}.{}'.format(file, file_id)
+        for file_id in file_ids:
+            subset_dataset_file = '{}.{}'.format(file, file_id)
 
-                if os.path.exists(subset_dataset_file + '.dxt.csv'):
-                    self.logger.debug('using existing parsed Darshan file')
+            if os.path.exists(subset_dataset_file + '.dxt.csv'):
+                self.logger.debug('using existing parsed Darshan file')
 
-                    bar()
-                    continue
+                continue
 
-                with open(file + '.dxt.csv') as f:
-                    rows = csv.DictReader(f)
+            with open(file + '.dxt.csv') as f:
+                rows = csv.DictReader(f)
 
-                    with open(subset_dataset_file + '.dxt.csv', 'w', newline='') as csvfile:
-                        w = csv.writer(csvfile)
+                with open(subset_dataset_file + '.dxt.csv', 'w', newline='') as csvfile:
+                    w = csv.writer(csvfile)
 
-                        w.writerow([
-                            'file_id',
-                            'api',
-                            'rank',
-                            'operation',
-                            'segment',
-                            'offset',
-                            'size',
-                            'start',
-                            'end',
-                            'ost'
-                        ])
+                    w.writerow([
+                        'file_id',
+                        'api',
+                        'rank',
+                        'operation',
+                        'segment',
+                        'offset',
+                        'size',
+                        'start',
+                        'end',
+                        'ost'
+                    ])
 
-                        for row in rows:
-                            if file_id == row['file_id']:
-                                w.writerow(row.values())
-
-                bar()
+                    for row in rows:
+                        if file_id == row['file_id']:
+                            w.writerow(row.values())
 
     def generate_plot(self, prefix, file, start=None, end=None, start_rank=None, end_rank=None, browser=False):
         """Generate an interactive operation plot."""
@@ -321,51 +316,48 @@ class DXT:
         # Generated the CSV files for each plot
         self.subset_dataset(file, file_ids)
 
-        with alive_bar(total=len(file_ids), title='', stats=False, spinner=None, enrich_print=False) as bar:
-            for file_id, file_name in file_ids.items():
-                output_file = '{}/{}.{}.operation.html'.format(prefix, file, file_id)
+        for file_id, file_name in file_ids.items():
+            output_file = '{}/{}.{}.operation.html'.format(prefix, file, file_id)
 
-                path = 'plots/operation.R'
-                script = pkg_resources.resource_filename(__name__, path)
+            path = 'plots/operation.R'
+            script = pkg_resources.resource_filename(__name__, path)
 
-                command = '{} -f {}.{}.dxt.csv {} -o {} -x {}'.format(
-                    script,
-                    file,
-                    file_id,
-                    limits,
-                    output_file,
-                    file_name
-                )
+            command = '{} -f {}.{}.dxt.csv {} -o {} -x {}'.format(
+                script,
+                file,
+                file_id,
+                limits,
+                output_file,
+                file_name
+            )
 
-                args = shlex.split(command)
+            args = shlex.split(command)
 
-                self.logger.info('generating interactive operation for: {}'.format(file_name))
-                self.logger.debug(command)
+            self.logger.info('generating interactive operation for: {}'.format(file_name))
+            self.logger.debug(command)
 
-                s = subprocess.run(args, stderr=subprocess.PIPE, stdout=subprocess.PIPE)
+            s = subprocess.run(args, stderr=subprocess.PIPE, stdout=subprocess.PIPE)
 
-                if s.returncode == 0:
-                    if os.path.exists(output_file):
-                        self.logger.info('SUCCESS: {}'.format(output_file))
-                    else:
-                        self.logger.warning('no data to generate interactive plots')
-
-                    if browser:
-                        webbrowser.open('file://{}'.format(output_file), new=2)
+            if s.returncode == 0:
+                if os.path.exists(output_file):
+                    self.logger.info('SUCCESS: {}'.format(output_file))
                 else:
-                    self.logger.error('failed to generate the interactive plots (error %s)', s.returncode)
+                    self.logger.warning('no data to generate interactive plots')
 
-                    if s.stdout is not None:
-                        for item in s.stdout.decode().split('\n'):
-                            if item.strip() != '':
-                                self.logger.debug(item)
+                if browser:
+                    webbrowser.open('file://{}'.format(output_file), new=2)
+            else:
+                self.logger.error('failed to generate the interactive plots (error %s)', s.returncode)
 
-                    if s.stderr is not None:
-                        for item in s.stderr.decode().split('\n'):
-                            if item.strip() != '':
-                                self.logger.error(item)
+                if s.stdout is not None:
+                    for item in s.stdout.decode().split('\n'):
+                        if item.strip() != '':
+                            self.logger.debug(item)
 
-                bar()
+                if s.stderr is not None:
+                    for item in s.stderr.decode().split('\n'):
+                        if item.strip() != '':
+                            self.logger.error(item)
 
     def generate_transfer_plot(self, prefix, file, start=None, end=None, start_rank=None, end_rank=None, browser=False):
         """Generate an interactive transfer plot."""
@@ -388,47 +380,44 @@ class DXT:
         # Generated the CSV files for each plot
         self.subset_dataset(file, file_ids)
 
-        with alive_bar(total=len(file_ids), title='', stats=False, spinner=None, enrich_print=False) as bar:
-            for file_id, file_name in file_ids.items():
-                output_file = '{}/{}.{}.transfer.html'.format(prefix, file, file_id)
+        for file_id, file_name in file_ids.items():
+            output_file = '{}/{}.{}.transfer.html'.format(prefix, file, file_id)
 
-                path = 'plots/transfer.R'
-                script = pkg_resources.resource_filename(__name__, path)
+            path = 'plots/transfer.R'
+            script = pkg_resources.resource_filename(__name__, path)
 
-                command = '{} -f {}.{}.dxt.csv -o {} -x {}'.format(
-                    script,
-                    file,
-                    file_id,
-                    output_file,
-                    file_name
-                )
+            command = '{} -f {}.{}.dxt.csv -o {} -x {}'.format(
+                script,
+                file,
+                file_id,
+                output_file,
+                file_name
+            )
 
-                args = shlex.split(command)
+            args = shlex.split(command)
 
-                self.logger.info('generating interactive transfer for: {}'.format(file_name))
-                self.logger.debug(command)
+            self.logger.info('generating interactive transfer for: {}'.format(file_name))
+            self.logger.debug(command)
 
-                s = subprocess.run(args, stderr=subprocess.PIPE, stdout=subprocess.PIPE)
+            s = subprocess.run(args, stderr=subprocess.PIPE, stdout=subprocess.PIPE)
 
-                if s.returncode == 0:
-                    self.logger.info('SUCCESS: {}'.format(output_file))
+            if s.returncode == 0:
+                self.logger.info('SUCCESS: {}'.format(output_file))
 
-                    if browser:
-                        webbrowser.open('file://{}.{}.transfer.html'.format(file, file_id), new=2)
-                else:
-                    self.logger.error('failed to generate the interactive plots (error %s)', s.returncode)
+                if browser:
+                    webbrowser.open('file://{}.{}.transfer.html'.format(file, file_id), new=2)
+            else:
+                self.logger.error('failed to generate the interactive plots (error %s)', s.returncode)
 
-                    if s.stdout is not None:
-                        for item in s.stdout.decode().split('\n'):
-                            if item.strip() != '':
-                                self.logger.debug(item)
+                if s.stdout is not None:
+                    for item in s.stdout.decode().split('\n'):
+                        if item.strip() != '':
+                            self.logger.debug(item)
 
-                    if s.stderr is not None:
-                        for item in s.stderr.decode().split('\n'):
-                            if item.strip() != '':
-                                self.logger.error(item)
-
-                bar()
+                if s.stderr is not None:
+                    for item in s.stderr.decode().split('\n'):
+                        if item.strip() != '':
+                            self.logger.error(item)
 
     def generate_spatiality_plot(self, prefix, file, browser=False):
         """Generate an interactive spatiality plot."""
@@ -437,50 +426,47 @@ class DXT:
         # Generated the CSV files for each plot
         self.subset_dataset(file, file_ids)
 
-        with alive_bar(total=len(file_ids), title='', stats=False, spinner=None, enrich_print=False) as bar:
-            for file_id, file_name in file_ids.items():
-                output_file = '{}/{}.{}.spatiality.html'.format(prefix, file, file_id)
+        for file_id, file_name in file_ids.items():
+            output_file = '{}/{}.{}.spatiality.html'.format(prefix, file, file_id)
 
-                path = 'plots/spatiality.R'
-                script = pkg_resources.resource_filename(__name__, path)
+            path = 'plots/spatiality.R'
+            script = pkg_resources.resource_filename(__name__, path)
 
-                command = '{} -f {}.{}.dxt.csv -o {} -x {}'.format(
-                    script,
-                    file,
-                    file_id,
-                    output_file,
-                    file_name
-                )
+            command = '{} -f {}.{}.dxt.csv -o {} -x {}'.format(
+                script,
+                file,
+                file_id,
+                output_file,
+                file_name
+            )
 
-                args = shlex.split(command)
+            args = shlex.split(command)
 
-                self.logger.info('generating interactive spatiality for: {}'.format(file_name))
-                self.logger.debug(command)
+            self.logger.info('generating interactive spatiality for: {}'.format(file_name))
+            self.logger.debug(command)
 
-                s = subprocess.run(args, stderr=subprocess.PIPE, stdout=subprocess.PIPE)
+            s = subprocess.run(args, stderr=subprocess.PIPE, stdout=subprocess.PIPE)
 
-                if s.returncode == 0:
-                    if os.path.exists(output_file):
-                        self.logger.info('SUCCESS: {}'.format(output_file))
-                    else:
-                        self.logger.warning('no data to generate spatiality plots')
-
-                    if browser:
-                        webbrowser.open('file://{}'.format(output_file), new=2)
+            if s.returncode == 0:
+                if os.path.exists(output_file):
+                    self.logger.info('SUCCESS: {}'.format(output_file))
                 else:
-                    self.logger.error('failed to generate the spatiality plots (error %s)', s.returncode)
+                    self.logger.warning('no data to generate spatiality plots')
 
-                    if s.stdout is not None:
-                        for item in s.stdout.decode().split('\n'):
-                            if item.strip() != '':
-                                self.logger.debug(item)
+                if browser:
+                    webbrowser.open('file://{}'.format(output_file), new=2)
+            else:
+                self.logger.error('failed to generate the spatiality plots (error %s)', s.returncode)
 
-                    if s.stderr is not None:
-                        for item in s.stderr.decode().split('\n'):
-                            if item.strip() != '':
-                                self.logger.error(item)
+                if s.stdout is not None:
+                    for item in s.stdout.decode().split('\n'):
+                        if item.strip() != '':
+                            self.logger.debug(item)
 
-                bar()
+                if s.stderr is not None:
+                    for item in s.stderr.decode().split('\n'):
+                        if item.strip() != '':
+                            self.logger.error(item)
 
 
 def main():
