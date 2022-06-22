@@ -29,6 +29,8 @@ import webbrowser
 import logging
 import logging.handlers
 import pkg_resources
+import darshan
+import pandas as pd
 
 from distutils.spawn import find_executable
 from alive_progress import alive_bar
@@ -66,7 +68,6 @@ class Explorer:
 
     def run(self):
         self.is_darshan_file(self.args.darshan)
-        self.parse(self.args.darshan)
 
         if not self.args.prefix:
             self.prefix = os.getcwd()
@@ -127,152 +128,67 @@ class Explorer:
 
             exit(-1)
 
-    def dxt(self, file):
-        """Parse the Darshan file to generate the .dxt trace file."""
-        if os.path.exists(file + '.dxt'):
-            self.logger.debug('using existing parsed Darshan file')
+    def list_files(self, report):
+        """Create a dictionary of file id as key and file name as value."""
+        file_ids = report.log['name_records']
 
-            return
-
-        command = 'darshan-dxt-parser {0}'.format(file)
-
-        args = shlex.split(command)
-
-        self.logger.debug('parsing {} file'.format(file))
-
-        with open('{}.dxt'.format(file), 'w') as output:
-            s = subprocess.run(args, stderr=subprocess.PIPE, stdout=output)
-
-        assert(s.returncode == 0)
-
-    def parse(self, file):
-        """Parse the .darshan.dxt file to generate a CSV file."""
-        self.dxt(file)
-
-        if os.path.exists(file + '.dxt.csv'):
-            self.logger.debug('using existing intermediate CSV file')
-
-            return
-
-        self.logger.debug('generating an intermediate CSV file')
-
-        with open(file + '.dxt') as f:
-            lines = f.readlines()
-            file_id = None
-
-            with open(file + '.dxt.csv', 'w', newline='') as csvfile:
-                w = csv.writer(csvfile)
-
-                w.writerow([
-                    'file_id',
-                    'api',
-                    'rank',
-                    'operation',
-                    'segment',
-                    'offset',
-                    'size',
-                    'start',
-                    'end',
-                    'ost'
-                ])
-
-                for line in lines:
-                    if 'file_id' in line:
-                        file_id = line.split(',')[1].split(':')[1].strip()
-
-                    if 'X_POSIX' in line:
-                        info = line.replace('[', '').replace(']', '').split()
-
-                        api = info[0]
-                        rank = info[1]
-                        operation = info[2]
-                        segment = info[3]
-                        offset = info[4]
-                        size = info[5]
-                        start = info[6]
-                        end = info[7]
-
-                        if len(info) == 9:
-                            ost = info[8]
-                        else:
-                            ost = None
-
-                        w.writerow([
-                            file_id,
-                            api.replace('X_', ''),
-                            rank,
-                            operation,
-                            segment,
-                            offset,
-                            size,
-                            start,
-                            end,
-                            ost
-                        ])
-
-                    if 'X_MPIIO' in line:
-                        info = line.split()
-
-                        api = info[0]
-                        rank = info[1]
-                        operation = info[2]
-
-                        # Newer Darshan DXT logs have segment for MPI-IO
-                        if len(info) == 8:
-                            segment = info[3]
-                            offset = info[4]
-                            size = info[5]
-                            start = info[6]
-                            end = info[7]
-                        else:
-                            segment = -1
-                            offset = info[3]
-                            size = info[4]
-                            start = info[5]
-                            end = info[6]
-
-                        if len(info) == 9:
-                            ost = info[8]
-                        else:
-                            ost = None
-
-                        w.writerow([
-                            file_id,
-                            api.replace('X_', ''),
-                            rank,
-                            operation,
-                            segment,
-                            offset,
-                            size,
-                            start,
-                            end,
-                            ost
-                        ])
-
-    def list_files(self, file):
-        files = {}
-
-        with open(file + '.dxt') as f:
-            lines = f.readlines()
-
-            for line in lines:
-                if 'file_id' in line:
-                    file_id = line.split(',')[1].split(':')[1].strip()
-                    file_name = line.split(',')[2].split(':')[1].strip()
-
-                    if file_id not in files.keys():
-                        files[file_id] = file_name
-
-        for file_id, file_name in files.items():
+        for file_id, file_name in file_ids.items():
             self.logger.info('FILE: {} (ID {})'.format(file_name, file_id))
 
-        self.logger.info('{} I/O trace observation records from {} files'.format(len(lines), len(files)))
+        return file_ids
 
-        return files
+    def create_dataframe(self, data, file_id, module):
+        """Create a dataframe from parsed records."""
+        column_names = ['file_id', 'api', 'rank', 'operation', 'segment', 'offset', 'length', 'start_time', 'end_time', 'ost']
+        result = pd.DataFrame()
+        for i in range(len(data)): 
+            if file_id == data[i]['id']:
+                if(data[i]['write_count'] > 0):
+                    write_segments = data[i]['write_segments']
+                    
+                    write_segments['file_id'] = file_id
 
-    def subset_dataset(self, file, file_ids):
-        self.logger.info('generating datasets')
+                    write_segments['api'] = module
 
+                    write_segments['rank'] = data[i]['rank']
+
+                    write_segments['operation'] = 'write'    
+                    
+                    write_segments['ost'] = '' 
+                    
+                    frames = [result, write_segments]
+                    
+                    result = pd.concat(frames)
+                if(data[i]['read_count'] > 0):    
+                    read_segments = data[i]['read_segments']
+
+                    read_segments['file_id'] = file_id
+
+                    read_segments['api'] = module
+
+                    read_segments['rank'] = data[i]['rank']
+
+                    read_segments['operation'] = 'read'  
+                    
+                    read_segments['ost'] = ''   
+
+                    frames = [result, read_segments]
+                    
+                    result = pd.concat(frames)   
+
+        result.index.name = 'segment'
+                
+        result.reset_index(inplace=True)
+        
+        result = result.reindex(columns=column_names)
+
+        result.rename(columns = {'length':'size', 'start_time':'start', 'end_time':'end'}, inplace = True)
+        
+        return result
+
+    def subset_dataset(self, file, file_ids, report):
+        """Subset the dataset based on file id and save to a csv file."""
+        self.logger.info('generating dataframes')
         with alive_bar(total=len(file_ids), title='', stats=False, spinner=None, enrich_print=False) as bar:
             for file_id in file_ids:
                 subset_dataset_file = '{}.{}'.format(file, file_id)
@@ -283,29 +199,16 @@ class Explorer:
                     bar()
                     continue
 
-                with open(file + '.dxt.csv') as f:
-                    rows = csv.DictReader(f)
+                self.logger.debug('parsing POSIX data')                      
+                df_posix = report.records['DXT_POSIX'].to_df()
+                result = self.create_dataframe(df_posix, file_id, 'POSIX')
+                result.to_csv(subset_dataset_file + '.dxt.csv', mode='a', index=False)
 
-                    with open(subset_dataset_file + '.dxt.csv', 'w', newline='') as csvfile:
-                        w = csv.writer(csvfile)
-
-                        w.writerow([
-                            'file_id',
-                            'api',
-                            'rank',
-                            'operation',
-                            'segment',
-                            'offset',
-                            'size',
-                            'start',
-                            'end',
-                            'ost'
-                        ])
-
-                        for row in rows:
-                            if file_id == row['file_id']:
-                                w.writerow(row.values())
-
+                self.logger.debug('parsing MPIIO data')   
+                df_mpiio = report.records['DXT_MPIIO'].to_df()
+                result = self.create_dataframe(df_mpiio, file_id, 'MPIIO')
+                result.to_csv(subset_dataset_file + '.dxt.csv', mode='a', index=False, header=None)
+                
                 bar()
 
     def generate_plot(self, file):
@@ -324,10 +227,12 @@ class Explorer:
         if self.args.end_rank:
             limits += ' -m {} '.format(self.args.end_rank)
 
-        file_ids = self.list_files(file)
+        report = darshan.DarshanReport(file, read_all=True)
+
+        file_ids = self.list_files(report)
 
         # Generated the CSV files for each plot
-        self.subset_dataset(file, file_ids)
+        self.subset_dataset(file, file_ids, report)
 
         with alive_bar(total=len(file_ids), title='', stats=False, spinner=None, enrich_print=False) as bar:
             for file_id, file_name in file_ids.items():
@@ -391,10 +296,12 @@ class Explorer:
         if self.args.end_rank:
             limits += ' -m {} '.format(self.args.end_rank)
 
-        file_ids = self.list_files(file)
+        report = darshan.DarshanReport(file, read_all=True)
 
+        file_ids = self.list_files(report)
+        
         # Generated the CSV files for each plot
-        self.subset_dataset(file, file_ids)
+        self.subset_dataset(file, file_ids, report)
 
         with alive_bar(total=len(file_ids), title='', stats=False, spinner=None, enrich_print=False) as bar:
             for file_id, file_name in file_ids.items():
@@ -440,10 +347,12 @@ class Explorer:
 
     def generate_spatiality_plot(self, file):
         """Generate an interactive spatiality plot."""
-        file_ids = self.list_files(file)
+        report = darshan.DarshanReport(file, read_all=True)
 
+        file_ids = self.list_files(report)
+        
         # Generated the CSV files for each plot
-        self.subset_dataset(file, file_ids)
+        self.subset_dataset(file, file_ids, report)
 
         with alive_bar(total=len(file_ids), title='', stats=False, spinner=None, enrich_print=False) as bar:
             for file_id, file_name in file_ids.items():
