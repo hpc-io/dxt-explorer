@@ -74,18 +74,20 @@ class Explorer:
         else:
             self.prefix = self.args.prefix
 
+        report = darshan.DarshanReport(self.args.darshan, read_all=True)
+
         if self.args.list_files:
-            self.list_files(self.args.darshan)
+            self.list_files(report)
 
             exit()
 
-        self.generate_plot(self.args.darshan)
+        self.generate_plot(self.args.darshan, report)
 
         if self.args.transfer:
-            self.generate_transfer_plot(self.args.darshan)
+            self.generate_transfer_plot(self.args.darshan, report)
 
         if self.args.spatiality:
-            self.generate_spatiality_plot(self.args.darshan)
+            self.generate_spatiality_plot(self.args.darshan, report)
 
     def get_directory(self):
         """Determine the install path to find the execution scripts."""
@@ -211,7 +213,7 @@ class Explorer:
                 
                 bar()
 
-    def generate_plot(self, file):
+    def generate_plot(self, file, report):
         """Generate an interactive operation plot."""
         limits = ''
 
@@ -226,8 +228,6 @@ class Explorer:
 
         if self.args.end_rank:
             limits += ' -m {} '.format(self.args.end_rank)
-
-        report = darshan.DarshanReport(file, read_all=True)
 
         file_ids = self.list_files(report)
 
@@ -280,7 +280,7 @@ class Explorer:
 
                 bar()
 
-    def generate_transfer_plot(self, file):
+    def generate_transfer_plot(self, file, report):
         """Generate an interactive transfer plot."""
         limits = ''
 
@@ -295,8 +295,6 @@ class Explorer:
 
         if self.args.end_rank:
             limits += ' -m {} '.format(self.args.end_rank)
-
-        report = darshan.DarshanReport(file, read_all=True)
 
         file_ids = self.list_files(report)
         
@@ -345,10 +343,8 @@ class Explorer:
 
                 bar()
 
-    def generate_spatiality_plot(self, file):
+    def generate_spatiality_plot(self, file, report):
         """Generate an interactive spatiality plot."""
-        report = darshan.DarshanReport(file, read_all=True)
-
         file_ids = self.list_files(report)
         
         # Generated the CSV files for each plot
