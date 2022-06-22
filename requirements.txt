@@ -1,3 +1,4 @@
 argparse
 pandas
 alive-progress
+darshan
