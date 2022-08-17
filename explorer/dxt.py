@@ -32,6 +32,7 @@ import pkg_resources
 
 from distutils.spawn import find_executable
 from alive_progress import alive_bar
+from explorer import version
 
 
 class Explorer:
@@ -582,6 +583,13 @@ def main():
         action='store_true',
         dest='browser',
         help='Open the browser with the generated plot'
+    )    
+
+    PARSER.add_argument(
+        '-v',
+        '--version',
+        action='version',
+        version='%(prog)s ' + version.__version__ + ' (' + version.__release_date__ + ')'
     )
 
     ARGS = PARSER.parse_args()
