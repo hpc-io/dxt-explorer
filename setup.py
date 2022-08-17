@@ -9,7 +9,7 @@ with open("requirements.txt") as f:
 setuptools.setup(
     name="dxt-explorer",
     keywords="dxt-explorer",
-    version="1.2",
+    version="1.3",
     author="Jean Luca Bez, Suren Byna",
     author_email="jlbez@lbl.gov, sbyna@lbl.gov",
     description="DXT Explorer is an interactive web-based log analysis tool to visualize Darshan DXT logs and help understand the I/O behavior.",
@@ -21,21 +21,22 @@ setuptools.setup(
         'pandas',
         'alive-progress'
     ],
-    packages=setuptools.find_packages(),
-    entry_points={
-        "console_scripts": [
-            "dxt-explorer=explore.dxt:main"
-        ]
-    },
+    packages=[
+        'explorer'
+    ],
     package_data={
-        'explore': [
-            'explore/plots/dxt-explorer.png',
-            'explore/plots/operation.R',
-            'explore/plots/transfer.R',
-            'explore/plots/spatiality.R'
+        'explorer': [
+            'explorer/*.*'
+            'explorer/plots/*.*'
+            'dxt-explorer.png'
         ],
     },
     include_package_data=True,
+    entry_points={
+        "console_scripts": [
+            "dxt-explorer=explorer.dxt:main"
+        ]
+    },
     classifiers=[
         "Development Status :: 4 - Beta",
         "Environment :: Console",

@@ -1,3 +1,5 @@
 include requirements.txt
-include explore/plots/*.R
-include explore/plots/*.png
+include dxt-explorer.png
+include explorer/*.*
+include explorer/plots/*.R
+include explorer/plots/*.png
