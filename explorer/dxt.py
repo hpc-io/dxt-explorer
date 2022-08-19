@@ -144,7 +144,7 @@ class Explorer:
         with open('{}.dxt'.format(file), 'w') as output:
             s = subprocess.run(args, stderr=subprocess.PIPE, stdout=output)
 
-            assert(s.returncode == 0)
+            assert s.returncode == 0
 
     def parse(self, file):
         """Parse the .darshan.dxt file to generate a CSV file."""
