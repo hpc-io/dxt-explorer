@@ -44,7 +44,7 @@ jobs:
 
       - name: Install R Dependencies
         run: |
-          Rscript --save explore/dependencies.R
+          Rscript --save explorer/dependencies.R
 
       - name: Run DXT Explorer (help)
         run: |
