@@ -3,3 +3,4 @@ include dxt-explorer.png
 include explorer/*.*
 include explorer/plots/*.R
 include explorer/plots/*.png
+include explorer/plots/*.html
