@@ -18,8 +18,7 @@ setuptools.setup(
     url="https://github.com/hpc-io/dxt-explorer",
     install_requires=[
         'argparse',
-        'pandas',
-        'alive-progress'
+        'pandas'
     ],
     packages=[
         'explorer'
