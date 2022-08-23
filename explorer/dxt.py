@@ -326,7 +326,6 @@ class Explorer:
                         if file_id == row['file_id']:
                             w.writerow(row.values())
 
-
     def generate_plot(self, file):
         """Generate an interactive operation plot."""
         limits = ''
@@ -396,7 +395,6 @@ class Explorer:
                         if item.strip() != '':
                             self.logger.error(item)
 
-
     def generate_transfer_plot(self, file):
         """Generate an interactive transfer plot."""
         limits = ''
@@ -461,7 +459,6 @@ class Explorer:
                     for item in s.stderr.decode().split('\n'):
                         if item.strip() != '':
                             self.logger.error(item)
-
 
     def generate_spatiality_plot(self, file):
         """Generate an interactive spatiality plot."""
