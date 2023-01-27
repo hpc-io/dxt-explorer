@@ -1,2 +1,7 @@
 argparse
 pandas
+pyranges
+plotly
+darshan
+pyarrow
+numpy==1.23

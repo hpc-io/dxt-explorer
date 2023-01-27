@@ -42,10 +42,6 @@ jobs:
           pip install -r requirements.txt
           pip install .
 
-      - name: Install R Dependencies
-        run: |
-          Rscript --save explorer/dependencies.R
-
       - name: Run DXT Explorer (help)
         run: |
           export PATH=/opt/darshan/bin:$PATH
@@ -75,6 +71,72 @@ jobs:
           export PATH=/opt/darshan/bin:$PATH
 
           dxt-explorer --debug --spatiality sample/jeanbez_8_benchmark_parallel_id45195555_8-6-50011-11681279140261054765_1628283217.darshan
+
+      - name: Run DXT Explorer (io phase)
+        run: |
+          export PATH=/opt/darshan/bin:$PATH
+
+          dxt-explorer --debug --io_phase sample/jeanbez_8_benchmark_parallel_id45195555_8-6-50011-11681279140261054765_1628283217.darshan
+
+      - name: Run DXT Explorer (ost usage operation)
+        run: |
+          export PATH=/opt/darshan/bin:$PATH
+
+          dxt-explorer --debug --ost_usage_operation sample/jeanbez_8_benchmark_parallel_id45195555_8-6-50011-11681279140261054765_1628283217.darshan
+
+      - name: Run DXT Explorer (ost usage transfer)
+        run: |
+          export PATH=/opt/darshan/bin:$PATH
+
+          dxt-explorer --debug --ost_usage_transfer sample/jeanbez_8_benchmark_parallel_id45195555_8-6-50011-11681279140261054765_1628283217.darshan
+
+      - name: Run DXT Explorer (rank zero workload)
+        run: |
+          export PATH=/opt/darshan/bin:$PATH
+
+          dxt-explorer --debug --rank_zero_workload sample/jeanbez_8_benchmark_parallel_id45195555_8-6-50011-11681279140261054765_1628283217.darshan
+
+      - name: Run DXT Explorer (unbalanced workload)
+        run: |
+          export PATH=/opt/darshan/bin:$PATH
+
+          dxt-explorer --debug --unbalanced_workload sample/jeanbez_8_benchmark_parallel_id45195555_8-6-50011-11681279140261054765_1628283217.darshan
+
+      - name: Run DXT Explorer (stragglers)
+        run: |
+          export PATH=/opt/darshan/bin:$PATH
+
+          dxt-explorer --debug --stragglers sample/jeanbez_8_benchmark_parallel_id45195555_8-6-50011-11681279140261054765_1628283217.darshan
+       
+      - name: Run DXT Explorer (Truncate Runtime)
+        run: |
+          export PATH=/opt/darshan/bin:$PATH
+
+          dxt-explorer --debug --start 3.7 sample/jeanbez_8_benchmark_parallel_id45195555_8-6-50011-11681279140261054765_1628283217.darshan
+
+      - name: Run DXT Explorer (Truncate Runtime)
+        run: |
+          export PATH=/opt/darshan/bin:$PATH
+
+          dxt-explorer --debug --end 3.9 sample/jeanbez_8_benchmark_parallel_id45195555_8-6-50011-11681279140261054765_1628283217.darshan
+      
+      - name: Run DXT Explorer (Truncate Rank)
+        run: |
+          export PATH=/opt/darshan/bin:$PATH
+
+          dxt-explorer --debug --from 1 sample/jeanbez_8_benchmark_parallel_id45195555_8-6-50011-11681279140261054765_1628283217.darshan
+    
+      - name: Run DXT Explorer (Truncate Rank)
+        run: |
+          export PATH=/opt/darshan/bin:$PATH
+
+          dxt-explorer --debug --to 100 sample/jeanbez_8_benchmark_parallel_id45195555_8-6-50011-11681279140261054765_1628283217.darshan
+
+      - name: Run DXT Explorer (Truncate Runtime & Rank)
+        run: |
+          export PATH=/opt/darshan/bin:$PATH
+
+          dxt-explorer --debug --start 3.7 --end 3.9 --from 1 --to 100 sample/jeanbez_8_benchmark_parallel_id45195555_8-6-50011-11681279140261054765_1628283217.darshan
 
       - name: Upload Artifact
         if: always()

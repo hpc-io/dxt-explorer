@@ -1,3 +1,7 @@
+```code
+Notice that is a private repository for the ungoing work to upgrade DXT Explorer.
+```
+
 <p align="center">
   <img src="https://github.com/hpc-io/dxt-explorer/raw/main/dxt-explorer.png" alt="DXT Explorer"/>
 </p>

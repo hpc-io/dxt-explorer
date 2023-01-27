@@ -9,31 +9,31 @@ RUN DEBIAN_FRONTEND=noninteractive apt-get install -y \
     wget \
     libssl-dev \
     libcurl4-openssl-dev \
-    r-base \
-    r-cran-curl \
-    r-cran-openssl \
-    r-cran-httr \
-    r-cran-plotly \
-    r-cran-cairo
+    autoconf \
+    zlib1g \
+    libtool \
+    r-base
 RUN rm -rf /var/lib/apt/lists/*
+RUN pip install matplotlib==3.5.1
 
-RUN wget ftp://ftp.mcs.anl.gov/pub/darshan/releases/darshan-3.3.1.tar.gz
-RUN tar zxvf darshan-3.3.1.tar.gz
-WORKDIR /darshan-3.3.1/darshan-util/
+RUN wget ftp://ftp.mcs.anl.gov/pub/darshan/releases/darshan-3.4.0.tar.gz
+RUN tar zxvf darshan-3.4.0.tar.gz
+WORKDIR /darshan-3.4.0/
+RUN ./prepare.sh
 
-RUN ./configure
+WORKDIR /darshan-3.4.0/darshan-util/
+RUN ./configure --enable-pydarshan 
 RUN make
 RUN make install
 
 WORKDIR /
 
-RUN git clone https://github.com/hpc-io/dxt-explorer
+RUN git clone https://github.com/hpc-io/dxt-explorer-2
 
-WORKDIR /dxt-explorer
+WORKDIR /dxt-explorer-2
 
 RUN pip install --upgrade pip
 RUN pip install -r requirements.txt
-RUN Rscript install-r-libraries.R
 RUN pip install .
 
 ENTRYPOINT ["dxt-explorer"]
