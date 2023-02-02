@@ -274,14 +274,13 @@ else:
     category_orders = None
 
 
-dxt_issues = {}
+dxt_issues = []
 
 any_bottleneck = False
 ranks_to_remove_from_base_posix = set()
 ranks_to_remove_from_base_mpiio = set()
 
 # Bottleneck 1
-rank_zero_imbalance = False
 bottleneck1 = pd.DataFrame()
 if options["rank_zero_workload"] == "True":
     any_bottleneck = True
@@ -323,27 +322,27 @@ if options["rank_zero_workload"] == "True":
         frames = [df_zero_posix, df_zero_mpiio]
         bottleneck1 = pd.concat(frames)
 
-        rank_zero_imbalance = True
+        if not bottleneck1.empty:
+            msg = ""
+            if isPOSIX_rank0:
+                msg = msg + "POSIX"
 
-        msg = ""
-        if isPOSIX_rank0:
-            msg = msg + "POSIX"
+            if isMPIIO_rank0:
+                if msg == "":
+                    msg = msg + "MPIIO"
+                else:
+                    msg = msg + " and MPIIO"
 
-        if isMPIIO_rank0:
-            if msg == "":
-                msg = msg + "MPIIO"
-            else:
-                msg = msg + " and MPIIO"
+            messages = {
+                "code": "D01",
+                "level": 1,
+                "issue": "Rank 0 is issuing a lot of I/O requests for " + msg,
+                "recommendations": ["Consider using MPI-IO collective"],
+            }
 
-        messages = {
-            "issue": "Rank 0 is issuing a lot of I/O requests for " + msg,
-            "recommendations": ["Consider using MPI-IO collective"],
-        }
-
-        dxt_issues["rank_zero_imbalance"] = messages
+            dxt_issues.append(messages)
 
 # Bottleneck 2
-unbalanced_workloads = False
 bottleneck2 = pd.DataFrame()
 if options["unbalanced_workload"] == "True":
     any_bottleneck = True
@@ -425,18 +424,19 @@ if options["unbalanced_workload"] == "True":
         frames = [df_posix_ranks, df_mpiio_ranks]
         bottleneck2 = pd.concat(frames)
 
-        unbalanced_workloads = True
+        if not bottleneck2.empty:
+            messages = {
+                "code": "D02",
+                "level": 1,
+                "issue": "Detected unbalanced workload between the ranks",
+                "recommendations": [
+                    "Consider better balancing the data transfer between the application ranks",
+                    "Consider tuning the stripe size and count to better distribute the data",
+                    "If the application uses netCDF and HDF5, double check the need to set NO_FILL values",
+                ],
+            }
 
-        messages = {
-            "issue": "Detected unbalanced workload between the ranks",
-            "recommendations": [
-                "Consider better balancing the data transfer between the application ranks",
-                "Consider tuning the stripe size and count to better distribute the data",
-                "If the application uses netCDF and HDF5, double check the need to set NO_FILL values",
-            ],
-        }
-
-        dxt_issues["unbalanced_workload"] = messages
+            dxt_issues.append(messages)
 
 my_shapes = []
 # Bottleneck 3
@@ -867,9 +867,11 @@ if any_bottleneck:
 
 fig.write_html(options["output"])
 
+json_data = {}
+json_data["dxt"] = dxt_issues
 json_file_name = options["file1"].split(".dxt")[0] + ".json"
 with open(json_file_name, "w") as outfile:
-    json.dump(dxt_issues, outfile)
+    json.dump(json_data, outfile)
 json_file_path = os.path.abspath(json_file_name)
 
 if any_bottleneck:
@@ -883,7 +885,11 @@ command = "drishti --html --light --size {} --json {} {}.darshan".format(
 )
 
 args = shlex.split(command)
-s = subprocess.run(args)
+s = subprocess.Popen(args, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+sOutput, sError = s.communicate()
+
+drishti_output = open(file + ".drishti", "w")
+drishti_output.write(sOutput.decode())
 
 output_doc = BeautifulSoup()
 

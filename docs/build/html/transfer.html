@@ -1,0 +1,270 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+  <meta charset="utf-8" />
+  
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  
+  <title>Exploring &mdash; DXT Explorer 1.2 documentation</title>
+  
+
+  
+  <link rel="stylesheet" href="_static/css/theme.css" type="text/css" />
+  <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+  <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+  <link rel="stylesheet" href="_static/css/theme.css" type="text/css" />
+  <link rel="stylesheet" href="_static/css/explorer.css" type="text/css" />
+
+  
+  
+
+  
+  
+
+  
+
+  
+  <!--[if lt IE 9]>
+    <script src="_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+    
+      <script type="text/javascript" id="documentation_options" data-url_root="./" src="_static/documentation_options.js"></script>
+        <script data-url_root="./" id="documentation_options" src="_static/documentation_options.js"></script>
+        <script src="_static/jquery.js"></script>
+        <script src="_static/underscore.js"></script>
+        <script src="_static/doctools.js"></script>
+    
+    <script type="text/javascript" src="_static/js/theme.js"></script>
+
+    
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="copyright" title="Copyright" href="copyright.html" />
+    <link rel="next" title="Spatiality Plot" href="spatiality.html" />
+    <link rel="prev" title="Operation Plot" href="operation.html" /> 
+</head>
+
+<body class="wy-body-for-nav">
+
+   
+  <div class="wy-grid-for-nav">
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search"  style="background: #efefef" >
+          
+
+          
+            <a href="index.html">
+          
+
+          
+            
+            <img src="_static/dxt-explorer.png" class="logo" alt="Logo"/>
+          
+          </a>
+
+          
+
+          
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+
+          
+        </div>
+
+        
+        <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+          
+            
+            
+              
+            
+            
+              <p class="caption" role="heading"><span class="caption-text">Getting Started</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="building.html">Build Instructions</a></li>
+<li class="toctree-l1"><a class="reference internal" href="interactive-plots.html">Interactive Plots</a></li>
+<li class="toctree-l1"><a class="reference internal" href="exploring.html">Exploring</a></li>
+<li class="toctree-l1"><a class="reference internal" href="operation.html">Operation Plot</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">Transfer Plot</a></li>
+<li class="toctree-l1"><a class="reference internal" href="spatiality.html">Spatiality Plot</a></li>
+<li class="toctree-l1"><a class="reference internal" href="rank-zero-workload.html">Rank Zero Heavy Workload Plot</a></li>
+<li class="toctree-l1"><a class="reference internal" href="unbalanced-ranks.html">Unbalanced Workload Plot</a></li>
+<li class="toctree-l1"><a class="reference internal" href="stragglers.html">Stragglers Plot</a></li>
+<li class="toctree-l1"><a class="reference internal" href="iophase.html">IO Phase Plot</a></li>
+<li class="toctree-l1"><a class="reference internal" href="ost-usage-operation.html">OST Usage Operation Plot</a></li>
+<li class="toctree-l1"><a class="reference internal" href="ost-usage-transfer.html">OST Usage Transfer Plot</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Contribute</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="instructions.html">Ways to contribute</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Legal</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="copyright.html">Copyright</a></li>
+<li class="toctree-l1"><a class="reference internal" href="license.html">License</a></li>
+</ul>
+
+            
+          
+        </div>
+        
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" aria-label="top navigation">
+        
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="index.html">DXT Explorer</a>
+        
+      </nav>
+
+
+      <div class="wy-nav-content">
+        
+        <div class="rst-content">
+        
+          
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<div role="navigation" aria-label="breadcrumbs navigation">
+
+  <ul class="wy-breadcrumbs">
+    
+      <li><a href="index.html" class="icon icon-home"></a> &raquo;</li>
+        
+      <li>Exploring</li>
+    
+    
+      <li class="wy-breadcrumbs-aside">
+        
+          
+            <a href="_sources/exploring.rst.txt" rel="nofollow"> View page source</a>
+          
+        
+      </li>
+    
+  </ul>
+
+  
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+            
+  <div class="section" id="exploring">
+<h1>Exploring<a class="headerlink" href="#exploring" title="Permalink to this headline">¶</a></h1>
+<p>Once you have the dependencies and DXT Explorer installed, you can run:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>dxt-explore DARSHAN_FILE_COLLECTED_WITH_DXT_ENABLE.darshan
+</pre></div>
+</div>
+<div class="highlight-text notranslate"><div class="highlight"><pre><span></span>usage: dxt-explorer [-h] [-o OUTPUT] [-t] [-s] [-d] [-l] [--start START] [--end END] [--from START_RANK] [--to END_RANK] [--browser] darshan
+
+DXT Explorer:
+
+positional arguments:
+  darshan               Input .darshan file
+
+optional arguments:
+  -h, --help            show this help message and exit
+  -o OUTPUT, --output OUTPUT
+                        Name of the output file
+  -t, --transfer        Generate an interactive data transfer explorer
+  -s, --spatiality      Generate an interactive spatiality explorer
+  -d, --debug           Enable debug mode
+  -l, --list            List all the files with trace
+  --start START         Report starts from X seconds (e.g., 3.7) from beginning of the job
+  --end END             Report ends at X seconds (e.g., 3.9) from beginning of the job
+  --from START_RANK     Report start from rank N
+  --to END_RANK         Report up to rank M
+  --browser             Open the browser with the generated plot
+</pre></div>
+</div>
+<p>DXT Explorer will generate by default a <code class="docutils literal notranslate"><span class="pre">explore.html</span></code> file with an interactive plot that you can open in any browser to explore. If you enabled the transfer or spatiality plots, additional <code class="docutils literal notranslate"><span class="pre">.html</span></code> files will be generated, one for each type. You are expected to visualize the following messages in the console:</p>
+<div class="highlight-text notranslate"><div class="highlight"><pre><span></span>2021-10-05 03:21:34,907 explore - INFO - darshan-dxt-parser: FOUND
+2021-10-05 03:21:34,907 explore - INFO - Rscript: FOUND
+2021-10-05 03:21:34,907 explore - INFO - parsing darshan/&lt;FILE&gt;.darshan file
+2021-10-05 03:21:35,248 explore - INFO - generating an intermediate CSV file
+2021-10-05 03:21:36,240 explore - INFO - generating interactive operation plot
+2021-10-05 03:21:54,657 explore - INFO - SUCCESS
+</pre></div>
+</div>
+<p>You can find a couple of interactive examples of DXT traces collected from FLASH, E2E, and OpenPMD in the <a class="reference external" href="https://jeanbez.gitlab.io/pdsw-2021">companion repository</a> for our PDSW’21 paper.</p>
+</div>
+
+
+           </div>
+           
+          </div>
+          <footer>
+    <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
+        <a href="instructions.html" class="btn btn-neutral float-right" title="Ways to contribute" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+        <a href="building.html" class="btn btn-neutral float-left" title="Build Instructions" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>
+        &#169; <a href="copyright.html">Copyright</a> 2022, Jean Luca Bez, Suren Byna.
+
+    </p>
+  </div>
+    
+    
+    
+    Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    
+    provided by <a href="https://readthedocs.org">Read the Docs</a>. 
+
+</footer>
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+  
+
+  <script type="text/javascript">
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script>
+
+  
+  
+    
+   
+
+</body>
+</html>

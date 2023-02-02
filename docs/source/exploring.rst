@@ -9,7 +9,7 @@ Once you have the dependencies and DXT Explorer installed, you can run:
 
 .. code-block:: text
 
-  usage: dxt-explorer [-h] [-o OUTPUT] [-p PREFIX] [-t] [-s] [-i] [-oo] [-ot] [-d] [-l] [--start START] [--end END] [--from START_RANK] [--to END_RANK] [--browser] [-r] [-u] [-st] [-v] darshan
+  usage: dxt-explorer [-h] [-o OUTPUT] [-p PREFIX] [-t] [-s] [-i] [-oo] [-ot] [-r] [-u] [-st] [-d] [-l] [--start START] [--end END] [--from START_RANK] [--to END_RANK] [--browser] [-csv] [-v] darshan
 
   DXT Explorer:
 
@@ -29,6 +29,11 @@ Once you have the dependencies and DXT Explorer installed, you can run:
                           Generate an interactive OST usage operation explorer
     -ot, --ost_usage_transfer
                           Generate an interactive OST usage data transfer size explorer
+    -r, --rank_zero_workload
+                          Determine if rank 0 is doing more I/O than the rest of the workload
+    -u, --unbalanced_workload
+                          Determine which ranks have unbalanced workload
+    -st, --stragglers     Determine the 5 percent slowest operations in the time distribution
     -d, --debug           Enable debug mode
     -l, --list            List all the files with trace
     --start START         Report starts from X seconds (e.g., 3.7) from beginning of the job
@@ -36,11 +41,7 @@ Once you have the dependencies and DXT Explorer installed, you can run:
     --from START_RANK     Report start from rank N
     --to END_RANK         Report up to rank M
     --browser             Open the browser with the generated plot
-    -r, --rank_zero_workload
-                          Determine if rank 0 is doing more I/O than the rest of the workload
-    -u, --unbalanced_workload
-                          Determine which ranks have unbalanced workload
-    -st, --stragglers     Determine the 5 percent slowest operations in the time distribution
+    -csv, --csv           Save the parsed DXT trace data into a csv
     -v, --version         show program's version number and exit
 
 DXT Explorer will generate by default an ``index.html`` file with links to all interactive plots that you can open in any browser to explore. If you enabled the transfer or spatiality plots, additional ``.html`` files will be generated, one for each type and the link to those html files will be provided in the ``index.html`` file. 
