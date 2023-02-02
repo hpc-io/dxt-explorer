@@ -13,13 +13,11 @@ DXT Explorer requires a Darshan log file collected with tracing data. The Darsha
 
 To enable tracing for particular files you can refer to the Darshan's documentation page.
 
-To use DXT Explorer, you need to have Python 3 and R already installed in your system, and install some required Python libraries:
+To use DXT Explorer, you need to have Python 3 installed in your system, and install some required Python libraries:
 
 .. code-block:: bash
 
     pip install -r requirements.txt
-
-In the first execution ever, DXT Explorer will automatically download any missing R packages required, thus it might take longer to generate the plot. This is all done at user level, without any need for elevated priviledges.
 
 You also need to have Darshan Utils installed (``darshan-dxt-parser``) and available in your path.
 

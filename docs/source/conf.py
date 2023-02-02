@@ -19,7 +19,7 @@ import sphinx_rtd_theme
 # -- Project information -----------------------------------------------------
 
 project = 'DXT Explorer'
-copyright = '2021, Jean Luca Bez, Suren Byna'
+copyright = '2022, Jean Luca Bez, Suren Byna'
 author = 'Jean Luca Bez, Suren Byna'
 
 # The full version, including alpha/beta/rc tags
