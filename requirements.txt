@@ -1,7 +1,7 @@
+numpy==1.23
 argparse
 pandas
 pyranges
 plotly
 darshan
 pyarrow
-numpy==1.23

@@ -28,9 +28,9 @@ RUN make install
 
 WORKDIR /
 
-RUN git clone https://github.com/hpc-io/dxt-explorer-2
+RUN git clone https://github.com/hpc-io/dxt-explorer
 
-WORKDIR /dxt-explorer-2
+WORKDIR /dxt-explorer
 
 RUN pip install --upgrade pip
 RUN pip install -r requirements.txt

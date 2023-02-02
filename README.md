@@ -1,7 +1,3 @@
-```code
-Notice that is a private repository for the ungoing work to upgrade DXT Explorer.
-```
-
 <p align="center">
   <img src="https://github.com/hpc-io/dxt-explorer/raw/main/dxt-explorer.png" alt="DXT Explorer"/>
 </p>
@@ -30,7 +26,7 @@ You can find more information about DXT Explorer in our PDSW'21 paper. If you us
 ```
 ---
 
-DXT Explorer Copyright (c) 2021, The Regents of the University of California, through Lawrence Berkeley National Laboratory (subject to receipt of any required approvals from the U.S. Dept. of Energy). All rights reserved.
+DXT Explorer Copyright (c) 2022, The Regents of the University of California, through Lawrence Berkeley National Laboratory (subject to receipt of any required approvals from the U.S. Dept. of Energy). All rights reserved.
 
 If you have questions about your rights to use or distribute this software, please contact Berkeley Lab's Intellectual Property Office at IPO@lbl.gov.
 
