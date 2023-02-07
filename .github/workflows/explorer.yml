@@ -104,35 +104,39 @@ jobs:
 
           dxt-explorer --debug --stragglers sample/jeanbez_8_benchmark_parallel_id45195555_8-6-50011-11681279140261054765_1628283217.darshan
        
-      - name: Run DXT Explorer (Truncate Runtime)
+      - name: Run DXT Explorer (truncate runtime)
         run: |
           export PATH=/opt/darshan/bin:$PATH
 
           dxt-explorer --debug --start 3.7 sample/jeanbez_8_benchmark_parallel_id45195555_8-6-50011-11681279140261054765_1628283217.darshan
 
-      - name: Run DXT Explorer (Truncate Runtime)
+      - name: Run DXT Explorer (truncate runtime)
         run: |
           export PATH=/opt/darshan/bin:$PATH
 
           dxt-explorer --debug --end 3.9 sample/jeanbez_8_benchmark_parallel_id45195555_8-6-50011-11681279140261054765_1628283217.darshan
       
-      - name: Run DXT Explorer (Truncate Rank)
+      - name: Run DXT Explorer (truncate rank)
         run: |
           export PATH=/opt/darshan/bin:$PATH
 
           dxt-explorer --debug --from 1 sample/jeanbez_8_benchmark_parallel_id45195555_8-6-50011-11681279140261054765_1628283217.darshan
     
-      - name: Run DXT Explorer (Truncate Rank)
+      - name: Run DXT Explorer (truncate rank)
         run: |
           export PATH=/opt/darshan/bin:$PATH
 
           dxt-explorer --debug --to 100 sample/jeanbez_8_benchmark_parallel_id45195555_8-6-50011-11681279140261054765_1628283217.darshan
 
-      - name: Run DXT Explorer (Truncate Runtime & Rank)
+      - name: Run DXT Explorer (truncate both)
         run: |
           export PATH=/opt/darshan/bin:$PATH
 
           dxt-explorer --debug --start 3.7 --end 3.9 --from 1 --to 100 sample/jeanbez_8_benchmark_parallel_id45195555_8-6-50011-11681279140261054765_1628283217.darshan
+
+      - name: Setup tmate session
+        if: ${{ failure() }}
+        uses: mxschmitt/action-tmate@v3
 
       - name: Upload Artifact
         if: always()
