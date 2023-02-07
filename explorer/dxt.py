@@ -27,6 +27,7 @@ import os
 import shlex
 import subprocess
 import sys
+import errno
 import time
 import webbrowser
 
@@ -846,6 +847,8 @@ class Explorer:
                                     s.returncode,
                                 )
 
+                                sys.exit(os.EX_SOFTWARE)
+
                             start = end
                             end = end + increment_amount
                             snapshot += 1
@@ -899,6 +902,8 @@ class Explorer:
                             "failed to generate the interactive plots (error %s)",
                             s.returncode,
                         )
+
+                        sys.exit(os.EX_SOFTWARE)
 
     def generate_transfer_plot(self, file, report):
         """Generate an interactive transfer plot."""
@@ -962,6 +967,8 @@ class Explorer:
                         s.returncode,
                     )
 
+                    sys.exit(os.EX_SOFTWARE)
+
     def generate_spatiality_plot(self, file, report):
         """Generate an interactive spatiality plot."""
         file_ids = self.list_files(report)
@@ -1007,6 +1014,8 @@ class Explorer:
                         s.returncode,
                     )
 
+                    sys.exit(os.EX_SOFTWARE)
+
     def generate_phase_plot(self, file, report):
         """Generate an interactive I/O phase plot."""
         file_ids = self.list_files(report)
@@ -1051,6 +1060,8 @@ class Explorer:
                         "failed to generate the interactive plots (error %s)",
                         s.returncode,
                     )
+
+                    sys.exit(os.EX_SOFTWARE)
 
     def generate_ost_usage_operation_plot(self, file, report):
         """Generate an interactive OST usage operation plot."""
@@ -1100,6 +1111,8 @@ class Explorer:
                         s.returncode,
                     )
 
+                    sys.exit(os.EX_SOFTWARE)
+
     def generate_ost_usage_transfer_plot(self, file, report):
         """Generate an interactive OST usage data transfer plot."""
         file_ids = self.list_files(report)
@@ -1147,6 +1160,8 @@ class Explorer:
                         "failed to generate the interactive plots (error %s)",
                         s.returncode,
                     )
+
+                    sys.exit(os.EX_SOFTWARE)
 
     def generate_index(self, file, report):
         """Generate index file with all the plots."""
