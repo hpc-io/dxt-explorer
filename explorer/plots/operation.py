@@ -894,6 +894,7 @@ if s.returncode == 0:
 
     output_doc = BeautifulSoup()
     output_doc.append(output_doc.new_tag("body"))
+    output_doc.append(output_doc.new_tag("head"))
 
     with open(options["output"], "r") as html_file:
         output_doc.body.extend(BeautifulSoup(html_file.read(), "html.parser").body)
