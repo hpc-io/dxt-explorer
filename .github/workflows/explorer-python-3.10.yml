@@ -1,4 +1,4 @@
-name: DXT Explorer (Python 3.9)
+name: DXT Explorer (Python 3.10)
 
 on:
   pull_request:
@@ -8,7 +8,7 @@ on:
 jobs:
   explorer:
     runs-on: ubuntu-latest
-    container: python:3.9
+    container: python:3.10
     timeout-minutes: 60
 
     steps:
