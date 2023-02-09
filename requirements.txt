@@ -5,4 +5,5 @@ pyranges
 plotly
 darshan
 pyarrow
+bs4
 drishti-io

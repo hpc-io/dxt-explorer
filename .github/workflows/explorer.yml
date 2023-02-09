@@ -1,4 +1,4 @@
-name: DXT Explorer 
+name: DXT Explorer (Python 3.9)
 
 on:
   pull_request:
@@ -8,7 +8,7 @@ on:
 jobs:
   explorer:
     runs-on: ubuntu-latest
-    container: jlbez/dxt-explorer-ubuntu-20.04
+    container: python:3.9
     timeout-minutes: 60
 
     steps:
@@ -18,10 +18,6 @@ jobs:
 
       - name: Dependencies
         run: |
-          sudo apt-get update
-          sudo apt-get install cmake gcc git libtool python3 python3-pip libxt-dev libpng16-16 libpng-dev libcurl4-openssl-dev software-properties-common  -y
-          
-          # Darshan
           git clone https://github.com/darshan-hpc/darshan.git
 
       - name: Build Darshan
@@ -108,35 +104,39 @@ jobs:
 
           dxt-explorer --debug --stragglers sample/jeanbez_8_benchmark_parallel_id45195555_8-6-50011-11681279140261054765_1628283217.darshan
        
-      - name: Run DXT Explorer (Truncate Runtime)
+      - name: Run DXT Explorer (truncate runtime)
         run: |
           export PATH=/opt/darshan/bin:$PATH
 
           dxt-explorer --debug --start 3.7 sample/jeanbez_8_benchmark_parallel_id45195555_8-6-50011-11681279140261054765_1628283217.darshan
 
-      - name: Run DXT Explorer (Truncate Runtime)
+      - name: Run DXT Explorer (truncate runtime)
         run: |
           export PATH=/opt/darshan/bin:$PATH
 
           dxt-explorer --debug --end 3.9 sample/jeanbez_8_benchmark_parallel_id45195555_8-6-50011-11681279140261054765_1628283217.darshan
       
-      - name: Run DXT Explorer (Truncate Rank)
+      - name: Run DXT Explorer (truncate rank)
         run: |
           export PATH=/opt/darshan/bin:$PATH
 
           dxt-explorer --debug --from 1 sample/jeanbez_8_benchmark_parallel_id45195555_8-6-50011-11681279140261054765_1628283217.darshan
     
-      - name: Run DXT Explorer (Truncate Rank)
+      - name: Run DXT Explorer (truncate rank)
         run: |
           export PATH=/opt/darshan/bin:$PATH
 
           dxt-explorer --debug --to 100 sample/jeanbez_8_benchmark_parallel_id45195555_8-6-50011-11681279140261054765_1628283217.darshan
 
-      - name: Run DXT Explorer (Truncate Runtime & Rank)
+      - name: Run DXT Explorer (truncate both)
         run: |
           export PATH=/opt/darshan/bin:$PATH
 
           dxt-explorer --debug --start 3.7 --end 3.9 --from 1 --to 100 sample/jeanbez_8_benchmark_parallel_id45195555_8-6-50011-11681279140261054765_1628283217.darshan
+
+      - name: Setup tmate session
+        if: ${{ failure() }}
+        uses: mxschmitt/action-tmate@v3
 
       - name: Upload Artifact
         if: always()

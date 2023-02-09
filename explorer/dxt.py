@@ -21,6 +21,7 @@ so.
 
 import os
 import sys
+import errno
 import time
 import shlex
 import logging
