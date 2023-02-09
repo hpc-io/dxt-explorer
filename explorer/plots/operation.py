@@ -893,6 +893,7 @@ if s.returncode == 0:
     drishti_output.write(sOutput.decode())
 
     output_doc = BeautifulSoup()
+    output_doc.append(output_doc.new_tag("body"))
 
     with open(options["output"], "r") as html_file:
         output_doc.body.extend(BeautifulSoup(html_file.read(), "html.parser").body)
