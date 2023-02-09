@@ -19,11 +19,11 @@ import sphinx_rtd_theme
 # -- Project information -----------------------------------------------------
 
 project = 'DXT Explorer'
-copyright = '2022, Jean Luca Bez, Suren Byna'
-author = 'Jean Luca Bez, Suren Byna'
+copyright = '2022, Jean Luca Bez, Hammad Ather, Suren Byna'
+author = 'Jean Luca Bez, Hammad Ather, Suren Byna'
 
 # The full version, including alpha/beta/rc tags
-release = '1.2'
+release = '2.0'
 
 
 # -- General configuration ---------------------------------------------------

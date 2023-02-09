@@ -19,26 +19,25 @@ works, and perform publicly and display publicly, and to permit others to do
 so.
 """
 
-import argparse
-import datetime
-import logging
-import logging.handlers
 import os
-import shlex
-import subprocess
 import sys
 import time
-import webbrowser
-
+import shlex
+import logging
 import darshan
+import argparse
+import datetime
+import subprocess
+import webbrowser
 import pandas as pd
 import pkg_resources
 import pyranges as pr
-import darshan.backend.cffi_backend as darshanll
-from explorer import version as dxt_version
-
-from packaging import version
+import logging.handlers
 import pyarrow.feather as feather
+import darshan.backend.cffi_backend as darshanll
+
+from explorer import version as dxt_version
+from packaging import version
 
 
 class Explorer:
@@ -105,8 +104,10 @@ class Explorer:
 
         if self.args.io_phase:
             self.generate_phase_plot(filename, report)
+
         if self.args.ost_usage_operation:
             self.generate_ost_usage_operation_plot(filename, report)
+
         if self.args.ost_usage_transfer:
             self.generate_ost_usage_transfer_plot(filename, report)
 
@@ -270,8 +271,8 @@ class Explorer:
 
         df = []
 
-        df_posix.query("id == @file_id", inplace=True)
-        for index, row in df_posix.iterrows():
+        df_posix_temp = df_posix.query("id == @file_id", inplace=False)
+        for index, row in df_posix_temp.iterrows():
             write_segments = row["write_segments"]
             write_segments["operation"] = "write"
             read_segments = row["read_segments"]
@@ -298,8 +299,8 @@ class Explorer:
 
             df.append(temp_result)
 
-        df_mpiio.query("id == @file_id", inplace=True)
-        for index, row in df_mpiio.iterrows():
+        df_mpiio_temp = df_mpiio.query("id == @file_id", inplace=False)
+        for index, row in df_mpiio_temp.iterrows():
             write_segments = row["write_segments"]
             write_segments["operation"] = "write"
             read_segments = row["read_segments"]
@@ -326,7 +327,10 @@ class Explorer:
 
             df.append(temp_result)
 
-        result = pd.concat(df, axis=0, ignore_index=True)
+        result = pd.DataFrame()
+        if df:
+            result = pd.concat(df, axis=0, ignore_index=True)
+        
         feather.write_feather(
             result, subset_dataset_file + ".dxt", compression="uncompressed"
         )
@@ -845,6 +849,8 @@ class Explorer:
                                     "failed to generate the interactive plots (error %s)",
                                     s.returncode,
                                 )
+                                
+                                sys.exit(os.EX_SOFTWARE)
 
                             start = end
                             end = end + increment_amount
@@ -899,6 +905,8 @@ class Explorer:
                             "failed to generate the interactive plots (error %s)",
                             s.returncode,
                         )
+
+                        sys.exit(os.EX_SOFTWARE)
 
     def generate_transfer_plot(self, file, report):
         """Generate an interactive transfer plot."""
@@ -962,6 +970,8 @@ class Explorer:
                         s.returncode,
                     )
 
+                    sys.exit(os.EX_SOFTWARE)
+
     def generate_spatiality_plot(self, file, report):
         """Generate an interactive spatiality plot."""
         file_ids = self.list_files(report)
@@ -1007,6 +1017,8 @@ class Explorer:
                         s.returncode,
                     )
 
+                    sys.exit(os.EX_SOFTWARE)
+
     def generate_phase_plot(self, file, report):
         """Generate an interactive I/O phase plot."""
         file_ids = self.list_files(report)
@@ -1051,6 +1063,8 @@ class Explorer:
                         "failed to generate the interactive plots (error %s)",
                         s.returncode,
                     )
+
+                    sys.exit(os.EX_SOFTWARE)
 
     def generate_ost_usage_operation_plot(self, file, report):
         """Generate an interactive OST usage operation plot."""
@@ -1100,6 +1114,8 @@ class Explorer:
                         s.returncode,
                     )
 
+                    sys.exit(os.EX_SOFTWARE)
+
     def generate_ost_usage_transfer_plot(self, file, report):
         """Generate an interactive OST usage data transfer plot."""
         file_ids = self.list_files(report)
@@ -1147,6 +1163,8 @@ class Explorer:
                         "failed to generate the interactive plots (error %s)",
                         s.returncode,
                     )
+
+                    sys.exit(os.EX_SOFTWARE)
 
     def generate_index(self, file, report):
         """Generate index file with all the plots."""

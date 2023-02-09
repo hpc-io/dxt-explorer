@@ -1,4 +1,5 @@
 import os
+import sys
 import json
 import shlex
 import subprocess
@@ -8,9 +9,9 @@ import pyarrow.feather as feather
 import plotly.graph_objects as go
 
 from PIL import Image
-from optparse import OptionParser
-from explorer import insights
 from bs4 import BeautifulSoup
+from explorer import insights
+from optparse import OptionParser
 
 
 def add_trace_to_graph(dataframe, color_scale=None, stragglers=False):
@@ -224,11 +225,10 @@ parser.add_option(
 options = vars(options)
 
 df = feather.read_feather(options["file1"])
-df["osts"].fillna(value="-", inplace=True)
-
 if df.empty:
     quit()
 
+df["osts"].fillna(value="-", inplace=True)
 df.drop(df.tail(2).index, inplace=True)
 
 if not options["graph_type"]:
@@ -888,21 +888,24 @@ args = shlex.split(command)
 s = subprocess.Popen(args, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
 sOutput, sError = s.communicate()
 
-drishti_output = open(file + ".drishti", "w")
-drishti_output.write(sOutput.decode())
+if s.returncode == 0:
+    drishti_output = open(file + ".drishti", "w")
+    drishti_output.write(sOutput.decode())
 
-output_doc = BeautifulSoup()
+    output_doc = BeautifulSoup()
 
-with open(options["output"], "r") as html_file:
-    output_doc.body.extend(BeautifulSoup(html_file.read(), "html.parser").body)
+    with open(options["output"], "r") as html_file:
+        output_doc.body.extend(BeautifulSoup(html_file.read(), "html.parser").body)
 
-with open(file + ".darshan.html", "r") as html_file:
-    output_doc.head.extend(BeautifulSoup(html_file.read(), "html.parser").head)
+    with open(file + ".darshan.html", "r") as html_file:
+        output_doc.head.extend(BeautifulSoup(html_file.read(), "html.parser").head)
 
-with open(file + ".darshan.html", "r") as html_file:
-    output_doc.body.extend(BeautifulSoup(html_file.read(), "html.parser").body)
+    with open(file + ".darshan.html", "r") as html_file:
+        output_doc.body.extend(BeautifulSoup(html_file.read(), "html.parser").body)
 
-output_doc.style.append(BeautifulSoup("pre { padding-left: 60px;}", "html.parser"))
+    output_doc.style.append(BeautifulSoup("pre { padding-left: 60px;}", "html.parser"))
 
-with open(options["output"], "w") as file:
-    file.write(str(output_doc))
+    with open(options["output"], "w") as output_file:
+        output_file.write(str(output_doc))
+else:
+    sys.exit(os.EX_SOFTWARE)
