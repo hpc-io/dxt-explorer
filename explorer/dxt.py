@@ -330,7 +330,7 @@ class Explorer:
         result = pd.DataFrame()
         if df:
             result = pd.concat(df, axis=0, ignore_index=True)
-        
+
         feather.write_feather(
             result, subset_dataset_file + ".dxt", compression="uncompressed"
         )
@@ -849,7 +849,7 @@ class Explorer:
                                     "failed to generate the interactive plots (error %s)",
                                     s.returncode,
                                 )
-                                
+
                                 sys.exit(os.EX_SOFTWARE)
 
                             start = end
