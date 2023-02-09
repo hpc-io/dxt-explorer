@@ -44,5 +44,5 @@ Since we need to provide an input file and access the generated ``.html`` files,
 .. code-block:: bash
 
     docker run --rm --mount \
-        type=bind,source="$(PWD)",target="/dxt-explorer/darshan" \
+        type=bind,source="$(pwd)",target="/dxt-explorer" \
         dxt-explorer darshan/<FILE>.darshan
