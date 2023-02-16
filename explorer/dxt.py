@@ -90,6 +90,10 @@ class Explorer:
         )
         report = darshan.DarshanReport(filename, read_all=True)
 
+        if "DXT_POSIX" not in report.records and "DXT_MPIIO" not in report.records:
+            self.logger.info("No DXT trace data found in file: {}".format(filename))
+            exit()
+
         if self.args.list_files:
             self.list_files(report)
             exit()
@@ -1245,11 +1249,8 @@ class Explorer:
 
     def check_log_version(self, file, log_version, library_version):
         use_file = file
-
         if version.parse(log_version) < version.parse("3.4.0"):
-            use_file = "sample/" + os.path.basename(
-                file.replace(".darshan", ".converted.darshan")
-            )
+            use_file =  file.replace(".darshan", ".converted.darshan")
             self.logger.info(
                 'Converting .darshan log from {} to 3.4.0: format: saving output file "{}" in the current working directory.'.format(
                     log_version, use_file

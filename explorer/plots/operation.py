@@ -2,6 +2,7 @@ import os
 import sys
 import json
 import shlex
+import explorer
 import subprocess
 import pandas as pd
 import plotly.express as px
@@ -706,7 +707,9 @@ fig.add_shape(
     col="all",
 )
 
-pyLogo = Image.open("dxt-explorer.png")
+path = os.path.abspath(explorer.__file__)
+path = path.split('__init__.py')[0]
+pyLogo = Image.open(path + "plots/dxt-explorer.png")
 fig.add_layout_image(
     dict(
         source=pyLogo,
