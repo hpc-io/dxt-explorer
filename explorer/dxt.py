@@ -271,7 +271,7 @@ class Explorer:
 
         df = []
 
-        df_posix_temp = df_posix.query("id == @file_id", inplace=False)
+        df_posix_temp = df_posix.loc[df_posix['id'] == file_id]
         for index, row in df_posix_temp.iterrows():
             write_segments = row["write_segments"]
             write_segments["operation"] = "write"
@@ -299,7 +299,7 @@ class Explorer:
 
             df.append(temp_result)
 
-        df_mpiio_temp = df_mpiio.query("id == @file_id", inplace=False)
+        df_mpiio_temp = df_mpiio.loc[df_mpiio['id'] == file_id]
         for index, row in df_mpiio_temp.iterrows():
             write_segments = row["write_segments"]
             write_segments["operation"] = "write"
