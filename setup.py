@@ -16,7 +16,7 @@ setuptools.setup(
     long_description=long_description,
     long_description_content_type="text/markdown",
     url="https://github.com/hpc-io/dxt-explorer",
-    install_requires=["numpy==1.23", "argparse", "pandas", "pyranges", "plotly", "darshan", "pyarrow", "bs4", "drishti-io"],
+    install_requires=["numpy==1.23", "Pillow>=9.4.0", "plotly>=5.13.0", "argparse", "pandas", "pyranges", "darshan", "pyarrow", "bs4", "drishti-io"],
     include_package_data=True,
     entry_points={"console_scripts": ["dxt-explorer=explorer.dxt:main"]},
     packages=["explorer"],

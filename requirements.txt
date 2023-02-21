@@ -1,9 +1,10 @@
 numpy==1.23
+Pillow>=9.4.0
+plotly>=5.13.0
 argparse
 pandas
 pyranges
-plotly
-darshan
+darshan==3.4.0.1
 pyarrow
 bs4
 drishti-io

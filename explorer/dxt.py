@@ -183,7 +183,6 @@ class Explorer:
 
         recs_by_id = {}
         for i, rec in enumerate(report.records[mod]):
-
             if rec["id"] not in recs_by_id:
                 recs_by_id[rec["id"]] = []
 
@@ -274,8 +273,7 @@ class Explorer:
         runtime = 0
 
         df = []
-
-        df_posix_temp = df_posix.loc[df_posix['id'] == file_id]
+        df_posix_temp = df_posix.loc[df_posix["id"] == file_id]
         for index, row in df_posix_temp.iterrows():
             write_segments = row["write_segments"]
             write_segments["operation"] = "write"
@@ -303,7 +301,7 @@ class Explorer:
 
             df.append(temp_result)
 
-        df_mpiio_temp = df_mpiio.loc[df_mpiio['id'] == file_id]
+        df_mpiio_temp = df_mpiio.loc[df_mpiio["id"] == file_id]
         for index, row in df_mpiio_temp.iterrows():
             write_segments = row["write_segments"]
             write_segments["operation"] = "write"
@@ -1250,7 +1248,7 @@ class Explorer:
     def check_log_version(self, file, log_version, library_version):
         use_file = file
         if version.parse(log_version) < version.parse("3.4.0"):
-            use_file =  file.replace(".darshan", ".converted.darshan")
+            use_file = file.replace(".darshan", ".converted.darshan")
             self.logger.info(
                 'Converting .darshan log from {} to 3.4.0: format: saving output file "{}" in the current working directory.'.format(
                     log_version, use_file

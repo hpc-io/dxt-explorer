@@ -708,7 +708,7 @@ fig.add_shape(
 )
 
 path = os.path.abspath(explorer.__file__)
-path = path.split('__init__.py')[0]
+path = path.split("__init__.py")[0]
 pyLogo = Image.open(path + "plots/dxt-explorer.png")
 fig.add_layout_image(
     dict(
