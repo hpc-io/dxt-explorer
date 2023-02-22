@@ -4,7 +4,7 @@ plotly>=5.13.0
 argparse
 pandas
 pyranges
-darshan==3.4.0.1
+darshan
 pyarrow
 bs4
 drishti-io
