@@ -26,7 +26,7 @@ jobs:
 
           mkdir $DARSHAN_DIR
           cd darshan
-          git checkout darshan-3.4.0
+          git checkout darshan-3.4.1
           bash prepare.sh
           cd darshan-util
           ./configure --prefix=$DARSHAN_DIR
@@ -36,7 +36,8 @@ jobs:
       - name: Install DXT Explorer
         run: |
           pip install --upgrade pip
-          pip install -r requirements.txt -c darshan==3.4.0
+          pip install darshan==3.4.1
+          pip install -r requirements.txt
           pip install .
 
       - name: Run DXT Explorer (help)
