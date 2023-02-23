@@ -13,13 +13,13 @@ DXT Explorer requires a Darshan log file collected with tracing data. The Darsha
 
 To enable tracing for particular files you can refer to the Darshan's documentation page.
 
-To use DXT Explorer, you first need to get the darshan version installed on system, so that the matching pyDarshan version is installed from pip. To do this, run the following command (Make sure you have Python 3 installed on your system):
+To use DXT Explorer, you first need to get the darshan version installed on system so that the matching pyDarshan version is installed from pip. To do this, run the following command (Make sure you have Python 3 installed on your system):
 
 .. code-block:: bash
 
     bash prepare.sh
 
-This command will create a constraint.txt file which will contain the darshan version to be installed through pip. 
+This command will create a constraint.txt file which will contain the pyDarshan version to be installed through pip. 
 
 Run the below command to install some required Python libraries:
 
@@ -47,11 +47,25 @@ To install through pip, just run the following command:
 
 .. note::
 
-    If you are installing dxt-explorer through pip, make sure the darshan version installed on the machine matches the pyDarshan version installed through pip install darshan, otherwise you might get the following error:
+    If you are installing dxt-explorer through pip, make sure the darshan version installed on the machine matches the pyDarshan version installed through pip, otherwise you might get the following error:
 
     .. code-block:: bash
 
         darshan.discover_darshan.DarshanVersionError
+        
+-----------------------------------
+Build with Spack
+-----------------------------------
+
+You can also use Spack to install dxt-explorer:
+
+.. code-block:: bash
+
+    spack install dxt-explorer
+
+.. note::
+
+    Use the following installation guide to install spack on your machine if it is not already installed: https://spack-tutorial.readthedocs.io/en/latest/tutorial_basics.html
 
 -----------------------------------
 Docker Image
@@ -70,3 +84,4 @@ Since we need to provide an input file and access the generated ``.html`` files,
     docker run --rm --mount \
         type=bind,source="$(pwd)",target="/dxt-explorer" \
         dxt-explorer darshan/<FILE>.darshan
+
