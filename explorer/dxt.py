@@ -1247,11 +1247,11 @@ class Explorer:
 
     def check_log_version(self, file, log_version, library_version):
         use_file = file
-        if version.parse(log_version) < version.parse("3.4.0"):
+        if version.parse(log_version) < version.parse(library_version):
             use_file = file.replace(".darshan", ".converted.darshan")
             self.logger.info(
-                'Converting .darshan log from {} to 3.4.0: format: saving output file "{}" in the current working directory.'.format(
-                    log_version, use_file
+                'Converting .darshan log from {} to {}: format: saving output file "{}" in the current working directory.'.format(
+                    log_version, library_version, use_file
                 )
             )
 
