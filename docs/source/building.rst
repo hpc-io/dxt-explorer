@@ -1,10 +1,6 @@
 Build Instructions
 ===================================
 
------------------------------------
-Installing through git
------------------------------------
-
 DXT Explorer requires a Darshan log file collected with tracing data. The Darshan eXtended Tracing (DXT) support is disabled by default in Darshan. To enable tracing globally for all files, you need to set the ``DXT_ENABLE_IO_TRACE`` environment variable as follows:
 
 .. code-block:: bash
@@ -13,7 +9,11 @@ DXT Explorer requires a Darshan log file collected with tracing data. The Darsha
 
 To enable tracing for particular files you can refer to the Darshan's documentation page.
 
-To use DXT Explorer, you first need to get the darshan version installed on system so that the matching pyDarshan version is installed from pip. To do this, run the following command (Make sure you have Python 3 installed on your system):
+-----------------------------------
+Installing through git
+-----------------------------------
+
+To use DXT Explorer, you first need to get the Darshan version installed on system so that the matching pyDarshan version is installed from pip. To do this, run the following command (make sure you have Python 3 installed on your system):
 
 .. code-block:: bash
 
@@ -45,9 +45,9 @@ To install through pip, just run the following command:
 
     pip install dxt-explorer
 
-.. note::
+.. warning::
 
-    If you are installing dxt-explorer through pip, make sure the darshan version installed on the machine matches the pyDarshan version installed through pip, otherwise you might get the following error:
+    If you are installing dxt-explorer through pip, make sure the Darshan version installed on the machine matches the pyDarshan version installed through pip, otherwise you might get the following error:
 
     .. code-block:: bash
 
