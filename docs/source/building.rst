@@ -53,6 +53,14 @@ To install through pip, just run the following command:
 
         darshan.discover_darshan.DarshanVersionError
         
+.. note::
+
+    In NERSC systems (i.e., Cori or Perlmutter) you might need to load the Darshan module if it is not already loaded. For other systems, please refer to their documentation to use the correct module name.
+    
+    .. code-block:: bash
+    
+        module load darshan
+        
 -----------------------------------
 Build with Spack
 -----------------------------------
