@@ -347,7 +347,7 @@ class Explorer:
         row = [total_logs, runtime]
         result.loc[len(result.index)] = row
         result.to_csv(
-            subset_dataset_file + ".summary.dxt.csv", mode="a", index=False, header=True
+            subset_dataset_file + ".summary.dxt.csv", mode="w", index=False, header=True
         )
 
     def subset_dataset(self, file, file_ids, report):
