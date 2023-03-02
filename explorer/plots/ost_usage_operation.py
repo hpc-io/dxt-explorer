@@ -1,9 +1,11 @@
+import os
+import explorer
 import plotly.express as px
+import pyarrow.feather as feather
 
 from PIL import Image
 from optparse import OptionParser
 
-import pyarrow.feather as feather
 
 parser = OptionParser()
 parser.add_option(
@@ -155,7 +157,7 @@ fig.update_layout(
     margin=dict(r=20, l=20, b=75, t=125),
     title=("Explore <b>OST usage operation </b> <br>" + options["identifier"]),
     title_x=0.5,
-    title_y=0.95,
+    title_y=0.98,
     font=dict(size=13, color="#000000"),
     xaxis_title="Runtime (Seconds)",
     xaxis=dict(
@@ -182,7 +184,10 @@ for annotation in fig.layout.annotations:
     elif "MPIIO" in annotation.text:
         annotation.text = "MPIIO"
 
-pyLogo = Image.open("dxt-explorer.png")
+path = os.path.abspath(explorer.__file__)
+path = path.split("__init__.py")[0]
+pyLogo = Image.open(path + "plots/dxt-explorer.png")
+
 fig.add_layout_image(
     dict(
         source=pyLogo,

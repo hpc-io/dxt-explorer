@@ -273,61 +273,64 @@ class Explorer:
         runtime = 0
 
         df = []
-        df_posix_temp = df_posix.loc[df_posix["id"] == file_id]
-        for index, row in df_posix_temp.iterrows():
-            write_segments = row["write_segments"]
-            write_segments["operation"] = "write"
-            read_segments = row["read_segments"]
-            read_segments["operation"] = "read"
 
-            temp_result = pd.concat([write_segments, read_segments])
-            temp_result["file_id"] = file_id
-            temp_result["rank"] = row["rank"]
-            temp_result["api"] = "POSIX"
+        if not df_posix.empty:
+            df_posix_temp = df_posix.loc[df_posix["id"] == file_id]
+            for index, row in df_posix_temp.iterrows():
+                write_segments = row["write_segments"]
+                write_segments["operation"] = "write"
+                read_segments = row["read_segments"]
+                read_segments["operation"] = "read"
 
-            temp_result = temp_result.rename(
-                columns={"length": "size", "start_time": "start", "end_time": "end"}
-            )
+                temp_result = pd.concat([write_segments, read_segments])
+                temp_result["file_id"] = file_id
+                temp_result["rank"] = row["rank"]
+                temp_result["api"] = "POSIX"
 
-            total_logs = total_logs + len(temp_result)
-            runtime = max(runtime, temp_result["end"].max())
+                temp_result = temp_result.rename(
+                    columns={"length": "size", "start_time": "start", "end_time": "end"}
+                )
 
-            temp_result["start"] = temp_result["start"].round(decimals=4)
-            temp_result["end"] = temp_result["end"].round(decimals=4)
+                total_logs = total_logs + len(temp_result)
+                runtime = max(runtime, temp_result["end"].max())
 
-            temp_result.index.name = "segment"
-            temp_result.reset_index(inplace=True)
-            temp_result = temp_result.reindex(columns=column_names)
+                temp_result["start"] = temp_result["start"].round(decimals=4)
+                temp_result["end"] = temp_result["end"].round(decimals=4)
 
-            df.append(temp_result)
+                temp_result.index.name = "segment"
+                temp_result.reset_index(inplace=True)
+                temp_result = temp_result.reindex(columns=column_names)
 
-        df_mpiio_temp = df_mpiio.loc[df_mpiio["id"] == file_id]
-        for index, row in df_mpiio_temp.iterrows():
-            write_segments = row["write_segments"]
-            write_segments["operation"] = "write"
-            read_segments = row["read_segments"]
-            read_segments["operation"] = "read"
+                df.append(temp_result)
 
-            temp_result = pd.concat([write_segments, read_segments])
-            temp_result["file_id"] = file_id
-            temp_result["rank"] = row["rank"]
-            temp_result["api"] = "MPIIO"
+        if not df_mpiio.empty:
+            df_mpiio_temp = df_mpiio.loc[df_mpiio["id"] == file_id]
+            for index, row in df_mpiio_temp.iterrows():
+                write_segments = row["write_segments"]
+                write_segments["operation"] = "write"
+                read_segments = row["read_segments"]
+                read_segments["operation"] = "read"
 
-            temp_result = temp_result.rename(
-                columns={"length": "size", "start_time": "start", "end_time": "end"}
-            )
+                temp_result = pd.concat([write_segments, read_segments])
+                temp_result["file_id"] = file_id
+                temp_result["rank"] = row["rank"]
+                temp_result["api"] = "MPIIO"
 
-            total_logs = total_logs + len(temp_result)
-            runtime = max(runtime, temp_result["end"].max())
+                temp_result = temp_result.rename(
+                    columns={"length": "size", "start_time": "start", "end_time": "end"}
+                )
 
-            temp_result["start"] = temp_result["start"].round(decimals=4)
-            temp_result["end"] = temp_result["end"].round(decimals=4)
+                total_logs = total_logs + len(temp_result)
+                runtime = max(runtime, temp_result["end"].max())
 
-            temp_result.index.name = "segment"
-            temp_result.reset_index(inplace=True)
-            temp_result = temp_result.reindex(columns=column_names)
+                temp_result["start"] = temp_result["start"].round(decimals=4)
+                temp_result["end"] = temp_result["end"].round(decimals=4)
 
-            df.append(temp_result)
+                temp_result.index.name = "segment"
+                temp_result.reset_index(inplace=True)
+                temp_result = temp_result.reindex(columns=column_names)
+
+                df.append(temp_result)
 
         result = pd.DataFrame()
         if df:
@@ -398,105 +401,7 @@ class Explorer:
 
             self.create_dataframe(file_id, subset_dataset_file, df_posix, df_mpiio)
 
-    def merge_io_overlapping_phases(self, overlapping_df, df, module):
-        io_phases_df = pd.DataFrame(
-            columns=[
-                "index",
-                "api",
-                "operation",
-                "start",
-                "end",
-                "duration",
-                "fastest_rank",
-                "fastest_rank_start",
-                "fastest_rank_end",
-                "fastest_rank_duration",
-                "slowest_rank",
-                "slowest_rank_start",
-                "slowest_rank_end",
-                "slowest_rank_duration",
-                "threshold",
-            ]
-        )
-        io_phases_interval_df = pd.DataFrame(
-            columns=["index", "operation", "start", "end", "duration"]
-        )
-
-        for i in range(len(overlapping_df)):
-            start = overlapping_df["Start"].iat[i]
-            end = overlapping_df["End"].iat[i]
-
-            df_temp = df[df["start"] >= start]
-            df_temp = df_temp[df_temp["end"] <= end]
-            df_temp["duration"] = df_temp["end"] - df_temp["start"]
-
-            min = df_temp.loc[df_temp["end"] == df_temp["end"].min()]
-            fastest_rank = min["rank"].tolist()
-            fastest_rank_start = min["start"].tolist()
-            fastest_rank_end = min["end"].tolist()
-            fastest_rank_duration = min["duration"].tolist()
-            if fastest_rank:
-                fastest_rank = fastest_rank[0]
-                fastest_rank_duration = fastest_rank_duration[0]
-                fastest_rank_start = fastest_rank_start[0]
-                fastest_rank_end = fastest_rank_end[0]
-
-            max = df_temp.loc[df_temp["end"] == df_temp["end"].max()]
-            slowest_rank = max["rank"].tolist()
-            slowest_rank_start = max["start"].tolist()
-            slowest_rank_end = max["end"].tolist()
-            slowest_rank_duration = max["duration"].tolist()
-            if slowest_rank:
-                slowest_rank = slowest_rank[0]
-                slowest_rank_duration = slowest_rank_duration[0]
-                slowest_rank_start = slowest_rank_start[0]
-                slowest_rank_end = slowest_rank_end[0]
-
-            operation = ""
-            if df_temp["operation"].eq("read").any():
-                if df_temp["operation"].eq("write").any():
-                    operation = "read&write"
-                else:
-                    operation = "read"
-            elif df_temp["operation"].eq("write").any():
-                operation = "write"
-
-            start = df_temp["start"].min()
-            end = df_temp["end"].max()
-            duration = end - start
-            io_phases_df.loc[len(io_phases_df.index)] = [
-                0,
-                module,
-                operation,
-                start,
-                end,
-                duration,
-                fastest_rank,
-                fastest_rank_start,
-                fastest_rank_end,
-                fastest_rank_duration,
-                slowest_rank,
-                slowest_rank_start,
-                slowest_rank_end,
-                slowest_rank_duration,
-                0,
-            ]
-
-            if i != len(overlapping_df) - 1:
-                interval_start = end
-                interval_end = start = overlapping_df["Start"].iat[i + 1]
-                interval_duration = interval_end - interval_start
-                io_phases_interval_df.loc[len(io_phases_interval_df.index)] = [
-                    0,
-                    "interval",
-                    interval_start,
-                    interval_end,
-                    interval_duration,
-                ]
-
-        return io_phases_df, io_phases_interval_df
-
-    def merge_io_phases_by_threshold(self, df, module, threshold):
+    def merge_overlapping_io_phases(self, overlapping_df, df, module):
         io_phases_df = pd.DataFrame(
             columns=[
                 "index",
@@ -517,64 +422,98 @@ class Explorer:
             ]
         )
 
-        if not df.empty:
-            prev_value = df["end"].iat[0]
+        overlapping_df_end = overlapping_df[["End"]].to_numpy()
+        overlapping_df_start = overlapping_df[["Start"]].to_numpy()
+        interval_duration = 0
+
+        for i in range(len(overlapping_df_end) - 1):
+            interval_start = overlapping_df_end[i]
+            interval_end = overlapping_df_start[i + 1]
+            interval_duration = interval_duration + (interval_end - interval_start)
+
+        threshold = float(interval_duration / (len(overlapping_df_end) - 1))
+        merged_df = pd.DataFrame(columns=["Start", "End"])
+
+        if len(overlapping_df_end) != 0:
+            prev_value = overlapping_df_end[0]
             prev_index = 0
 
-            for i in range(1, len(df)):
-                if df["start"].iat[i] - prev_value <= threshold:
-                    prev_value = df["end"].iat[i]
-                if df["start"].iat[i] - prev_value > threshold or i == len(df) - 1:
-                    phase_df = df[prev_index:i].copy()
+            for i in range(1, len(overlapping_df_end)):
+                if overlapping_df_start[i] - prev_value <= threshold:
+                    prev_value = overlapping_df_end[i]
+                if (
+                    overlapping_df_start[i] - prev_value > threshold
+                    or i == len(overlapping_df_end) - 1
+                ):
+                    merged_df.loc[len(merged_df.index)] = [
+                        float(overlapping_df_start[prev_index]),
+                        float(prev_value),
+                    ]
+                    prev_index = i
+                    prev_value = overlapping_df_end[i]
 
-                    operation = ""
-                    if phase_df["operation"].eq("read&write").any():
+        if not merged_df.empty:
+            for i in range(len(merged_df)):
+                start = merged_df["Start"].iat[i]
+                end = merged_df["End"].iat[i]
+
+                df_temp = df[df["start"] >= start]
+                df_temp = df_temp[df_temp["end"] <= end]
+                df_temp["duration"] = df_temp["end"] - df_temp["start"]
+
+                min = df_temp.loc[df_temp["end"] == df_temp["end"].min()]
+                fastest_rank = min["rank"].tolist()
+                fastest_rank_start = min["start"].tolist()
+                fastest_rank_end = min["end"].tolist()
+                fastest_rank_duration = min["duration"].tolist()
+                if fastest_rank:
+                    fastest_rank = fastest_rank[0]
+                    fastest_rank_duration = fastest_rank_duration[0]
+                    fastest_rank_start = fastest_rank_start[0]
+                    fastest_rank_end = fastest_rank_end[0]
+
+                max = df_temp.loc[df_temp["end"] == df_temp["end"].max()]
+                slowest_rank = max["rank"].tolist()
+                slowest_rank_start = max["start"].tolist()
+                slowest_rank_end = max["end"].tolist()
+                slowest_rank_duration = max["duration"].tolist()
+                if slowest_rank:
+                    slowest_rank = slowest_rank[0]
+                    slowest_rank_duration = slowest_rank_duration[0]
+                    slowest_rank_start = slowest_rank_start[0]
+                    slowest_rank_end = slowest_rank_end[0]
+
+                operation = ""
+                if df_temp["operation"].eq("read").any():
+                    if df_temp["operation"].eq("write").any():
                         operation = "read&write"
                     else:
-                        if phase_df["operation"].eq("read").any():
-                            if phase_df["operation"].eq("write").any():
-                                operation = "read&write"
-                            else:
-                                operation = "read"
-                        elif phase_df["operation"].eq("write").any():
-                            operation = "write"
-                    duration = phase_df["end"].max() - phase_df["start"].min()
+                        operation = "read"
+                elif df_temp["operation"].eq("write").any():
+                    operation = "write"
 
-                    val = phase_df.loc[phase_df["end"] == phase_df["end"].min()]
+                start = df_temp["start"].min()
+                end = df_temp["end"].max()
+                duration = end - start
+                io_phases_df.loc[len(io_phases_df.index)] = [
+                    0,
+                    module,
+                    operation,
+                    start,
+                    end,
+                    duration,
+                    fastest_rank,
+                    fastest_rank_start,
+                    fastest_rank_end,
+                    fastest_rank_duration,
+                    slowest_rank,
+                    slowest_rank_start,
+                    slowest_rank_end,
+                    slowest_rank_duration,
+                    threshold,
+                ]
 
-                    fastest_rank = val["fastest_rank"].tolist()[0]
-                    fastest_rank_start = val["fastest_rank_start"].tolist()[0]
-                    fastest_rank_end = val["fastest_rank_end"].tolist()[0]
-                    fastest_rank_duration = val["fastest_rank_duration"].tolist()[0]
-
-                    val = phase_df.loc[phase_df["end"] == phase_df["end"].max()]
-
-                    slowest_rank = val["slowest_rank"].tolist()[0]
-                    slowest_rank_start = val["slowest_rank_start"].tolist()[0]
-                    slowest_rank_end = val["slowest_rank_end"].tolist()[0]
-                    slowest_rank_duration = val["slowest_rank_duration"].tolist()[0]
-
-                    io_phases_df.loc[len(io_phases_df.index)] = [
-                        0,
-                        module,
-                        operation,
-                        phase_df["start"].min(),
-                        phase_df["end"].max(),
-                        duration,
-                        fastest_rank,
-                        fastest_rank_start,
-                        fastest_rank_end,
-                        fastest_rank_duration,
-                        slowest_rank,
-                        slowest_rank_start,
-                        slowest_rank_end,
-                        slowest_rank_duration,
-                        threshold,
-                    ]
-
-                    prev_index = i
-                    prev_value = df["end"].iat[i]
-
+        io_phases_df.dropna(inplace=True)
         return io_phases_df
 
     def calculate_io_phases(
@@ -591,34 +530,38 @@ class Explorer:
                 self.logger.info("generating I/O phases dataframe")
                 df = feather.read_feather(subset_dataset_file)
                 if not df.empty:
+                    df_selected = df[["api", "start", "end"]].copy()
+                    df_selected["start"] = df_selected["start"] * 10000
+                    df_selected["end"] = df_selected["end"] * 10000
+                    df_selected.columns = ["Chromosome", "Start", "End"]
+
+                    gr = pr.PyRanges(df_selected)
+                    overlapping = gr.merge()
+                    overlapping = overlapping.as_df()
+
+                    overlapping["Start"] = overlapping["Start"] / 10000
+                    overlapping["End"] = overlapping["End"] / 10000
+
                     df_posix = df[df["api"] == "POSIX"]
                     df_posix = df_posix.sort_values("start")
 
-                    (
-                        io_phases_df_posix,
-                        io_phases_interval_df,
-                    ) = self.merge_io_overlapping_phases(df_posix, "POSIX")
+                    overlapping_POSIX = overlapping[
+                        overlapping["Chromosome"] == "POSIX"
+                    ]
 
-                    mean = io_phases_interval_df["duration"].mean()
-                    threshold_posix = mean
-
-                    io_phases_df_posix = self.merge_io_phases_by_threshold(
-                        io_phases_df_posix, "POSIX", threshold_posix
+                    io_phases_df_posix = self.merge_overlapping_io_phases(
+                        overlapping_POSIX, df_posix, "POSIX"
                     )
 
                     df_mpiio = df[df["api"] == "MPIIO"]
                     df_mpiio = df_mpiio.sort_values("start")
 
-                    (
-                        io_phases_df_mpiio,
-                        io_phases_interval_df,
-                    ) = self.merge_io_overlapping_phases(df_mpiio, "MPIIO")
+                    overlapping_MPIIO = overlapping[
+                        overlapping["Chromosome"] == "MPIIO"
+                    ]
 
-                    mean = io_phases_interval_df["duration"].mean()
-                    threshold_mpiio = mean
-
-                    io_phases_df_mpiio = self.merge_io_phases_by_threshold(
-                        io_phases_df_mpiio, "MPIIO", threshold_mpiio
+                    io_phases_df_mpiio = self.merge_overlapping_io_phases(
+                        overlapping_MPIIO, df_mpiio, "MPIIO"
                     )
 
                     frames = [io_phases_df_posix, io_phases_df_mpiio]
@@ -639,16 +582,16 @@ class Explorer:
                 file_name = subset_dataset_file.split(".dxt")[0]
                 phases_file = "{}.{}".format(file_name, "io_phases")
                 if not os.path.exists(phases_file):
+                    self.logger.info("generating I/O phases dataframe")
                     df = feather.read_feather(subset_dataset_file)
                     if not df.empty:
                         df_selected = df[["api", "start", "end"]].copy()
-
                         df_selected["start"] = df_selected["start"] * 10000
                         df_selected["end"] = df_selected["end"] * 10000
                         df_selected.columns = ["Chromosome", "Start", "End"]
+
                         gr = pr.PyRanges(df_selected)
                         overlapping = gr.merge()
-
                         overlapping = overlapping.as_df()
 
                         overlapping["Start"] = overlapping["Start"] / 10000
@@ -660,18 +603,9 @@ class Explorer:
                         overlapping_POSIX = overlapping[
                             overlapping["Chromosome"] == "POSIX"
                         ]
-                        (
-                            io_phases_df_posix,
-                            io_phases_interval_df,
-                        ) = self.merge_io_overlapping_phases(
+
+                        io_phases_df_posix = self.merge_overlapping_io_phases(
                             overlapping_POSIX, df_posix, "POSIX"
-                        )
-
-                        mean = io_phases_interval_df["duration"].mean()
-                        threshold_posix = mean
-
-                        io_phases_df_posix = self.merge_io_phases_by_threshold(
-                            io_phases_df_posix, "POSIX", threshold_posix
                         )
 
                         df_mpiio = df[df["api"] == "MPIIO"]
@@ -680,18 +614,9 @@ class Explorer:
                         overlapping_MPIIO = overlapping[
                             overlapping["Chromosome"] == "MPIIO"
                         ]
-                        (
-                            io_phases_df_mpiio,
-                            io_phases_interval_df,
-                        ) = self.merge_io_overlapping_phases(
+
+                        io_phases_df_mpiio = self.merge_overlapping_io_phases(
                             overlapping_MPIIO, df_mpiio, "MPIIO"
-                        )
-
-                        mean = io_phases_interval_df["duration"].mean()
-                        threshold_mpiio = mean
-
-                        io_phases_df_mpiio = self.merge_io_phases_by_threshold(
-                            io_phases_df_mpiio, "MPIIO", threshold_mpiio
                         )
 
                         frames = [io_phases_df_posix, io_phases_df_mpiio]

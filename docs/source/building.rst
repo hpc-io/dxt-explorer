@@ -13,6 +13,14 @@ To enable tracing for particular files you can refer to the Darshan's documentat
 Installing through git
 -----------------------------------
 
+.. note::
+
+    In NERSC systems (i.e., Cori or Perlmutter) you might need to load the Darshan and Python module if it is not already loaded. For other systems, please refer to their documentation to use the correct module name.
+    
+    .. code-block:: bash
+        module load python
+        module load darshan
+
 To use DXT Explorer, you first need to get the Darshan version installed on system so that the matching pyDarshan version is installed from pip. To do this, run the following command (make sure you have Python 3 installed on your system):
 
 .. code-block:: bash

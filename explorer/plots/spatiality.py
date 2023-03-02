@@ -1,13 +1,12 @@
-#!/usr/bin/env
-
-from optparse import OptionParser
-from PIL import Image
-
-
-import plotly.express as px
+import os
+import explorer
 import numpy as np
-
+import plotly.express as px
 import pyarrow.feather as feather
+
+from PIL import Image
+from optparse import OptionParser
+
 
 parser = OptionParser()
 parser.add_option(
@@ -143,7 +142,9 @@ fig.update_traces(
 )
 
 
-pyLogo = Image.open("dxt-explorer.png")
+path = os.path.abspath(explorer.__file__)
+path = path.split("__init__.py")[0]
+pyLogo = Image.open(path + "plots/dxt-explorer.png")
 
 fig.add_layout_image(
     dict(
