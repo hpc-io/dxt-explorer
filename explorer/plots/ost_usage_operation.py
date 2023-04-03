@@ -79,22 +79,22 @@ else:
     facet_row = None
     category_orders = None
 
-df_dict = df.to_dict('records')
+df_dict = df.to_dict("records")
 new_records = []
-for row in (df_dict):
+for row in df_dict:
     osts = row["osts"].tolist()
     if len(osts) > 1:
         for ost in osts[1:]:
             new_row = copy.deepcopy(row)
-            new_row['osts'] = ost
+            new_row["osts"] = ost
             new_records.append(new_row)
-        
+
     row["osts"] = osts[0]
 
 df_dict = df_dict + new_records
 new_df = pd.DataFrame.from_dict(df_dict)
-new_df['osts'] = new_df['osts'].astype('string')
-new_df.sort_values(by='start', ascending=False)
+new_df["osts"] = new_df["osts"].astype("string")
+new_df.sort_values(by="start", ascending=False)
 
 count = new_df["osts"].nunique()
 

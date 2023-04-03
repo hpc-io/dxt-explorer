@@ -27,12 +27,7 @@ parser.add_option(
     metavar="start",
 )
 parser.add_option(
-    "-e", 
-    "--end", 
-    type="int", 
-    default=None, 
-    help="Mark trace end time", 
-    metavar="end"
+    "-e", "--end", type="int", default=None, help="Mark trace end time", metavar="end"
 )
 parser.add_option(
     "-n",
@@ -87,8 +82,8 @@ else:
 dict_request_sizes_posix_read = {}
 dict_request_sizes_posix_write = {}
 
-if ("POSIX" in df["api"].unique()):
-    df_posix = df[df["api"]=="POSIX"]
+if "POSIX" in df["api"].unique():
+    df_posix = df[df["api"] == "POSIX"]
     df_posix_size = df_posix["size"].tolist()
     df_posix_operation = df_posix["operation"].tolist()
     df_posix_osts = df_posix["osts"].tolist()
@@ -121,8 +116,8 @@ if ("POSIX" in df["api"].unique()):
 dict_request_sizes_mpiio_read = {}
 dict_request_sizes_mpiio_write = {}
 
-if ("MPIIO" in df["api"].unique()):
-    df_mpiio = df[df["api"]=="MPIIO"]
+if "MPIIO" in df["api"].unique():
+    df_mpiio = df[df["api"] == "MPIIO"]
     df_mpiio_size = df_mpiio["size"].tolist()
     df_mpiio_operation = df_mpiio["operation"].tolist()
     df_mpiio_osts = df_mpiio["osts"].tolist()
@@ -151,7 +146,7 @@ if ("MPIIO" in df["api"].unique()):
                         dict_request_sizes_mpiio_write[ost] = ost_size
                     else:
                         dict_request_sizes_mpiio_write[ost] += ost_size
-            
+
 posix_read = pd.DataFrame(
     dict_request_sizes_posix_read.items(), columns=["OST", "size"]
 )
@@ -179,7 +174,7 @@ request_df_mpiio = pd.concat([mpiio_read, mpiio_write])
 request_df_mpiio["api"] = "MPIIO"
 
 request_df = pd.concat([request_df_posix, request_df_mpiio])
-request_df['OST'] = request_df['OST'].astype('string')
+request_df["OST"] = request_df["OST"].astype("string")
 fig = px.bar(
     request_df,
     x="OST",
