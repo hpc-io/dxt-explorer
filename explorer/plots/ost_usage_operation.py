@@ -1,5 +1,7 @@
 import os
+import copy
 import explorer
+import pandas as pd
 import plotly.express as px
 import pyarrow.feather as feather
 
@@ -77,54 +79,27 @@ else:
     facet_row = None
     category_orders = None
 
+df_dict = df.to_dict('records')
+new_records = []
+for row in (df_dict):
+    osts = row["osts"].tolist()
+    if len(osts) > 1:
+        for ost in osts[1:]:
+            new_row = copy.deepcopy(row)
+            new_row['osts'] = ost
+            new_records.append(new_row)
+        
+    row["osts"] = osts[0]
 
-dict_request_sizes_posix_read = {}
-dict_request_sizes_posix_write = {}
+df_dict = df_dict + new_records
+new_df = pd.DataFrame.from_dict(df_dict)
+new_df['osts'] = new_df['osts'].astype('string')
+new_df.sort_values(by='start', ascending=False)
 
-dict_request_sizes_mpiio_read = {}
-dict_request_sizes_mpiio_write = {}
-
-for i in range(len(df)):
-    osts = df["osts"][i]
-    osts = osts.tolist()
-    flag = True
-
-    for ost in osts:
-        ost = str(ost)
-        if flag:
-            df.at[i, "osts"] = ost
-            flag = False
-        else:
-            df.loc[len(df.index)] = df.iloc[i]
-            df.at[len(df.index) - 1, "osts"] = ost
-
-        if df["api"][i] == "POSIX":
-            if df["operation"][i] == "write":
-                if ost in dict_request_sizes_posix_write:
-                    dict_request_sizes_posix_write[ost] += df.at[i, "size"]
-                else:
-                    dict_request_sizes_posix_write[ost] = df.at[i, "size"]
-            elif df["operation"][i] == "read":
-                if ost in dict_request_sizes_posix_read:
-                    dict_request_sizes_posix_read[ost] += df.at[i, "size"]
-                else:
-                    dict_request_sizes_posix_read[ost] = df.at[i, "size"]
-        elif df["api"][i] == "MPIIO":
-            if df["operation"][i] == "write":
-                if ost in dict_request_sizes_mpiio_write:
-                    dict_request_sizes_mpiio_write[ost] += df.at[i, "size"]
-                else:
-                    dict_request_sizes_mpiio_write[ost] = df.at[i, "size"]
-            elif df["operation"][i] == "read":
-                if ost in dict_request_sizes_mpiio_read:
-                    dict_request_sizes_mpiio_read[ost] += df.at[i, "size"]
-                else:
-                    dict_request_sizes_mpiio_read[ost] = df.at[i, "size"]
-
-count = df["osts"].nunique()
+count = new_df["osts"].nunique()
 
 fig = px.scatter(
-    df,
+    new_df,
     x="start",
     y="osts",
     color="operation",
@@ -135,7 +110,6 @@ fig = px.scatter(
     color_discrete_sequence=["#3c93c2", "#f0746e"],
     category_orders=category_orders,
 )
-
 
 fig.update_xaxes(showline=True, linewidth=1, linecolor="black", mirror=True)
 fig.update_yaxes(showline=True, linewidth=1, linecolor="black", mirror=True)

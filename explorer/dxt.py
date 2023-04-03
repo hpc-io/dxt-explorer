@@ -89,7 +89,6 @@ class Explorer:
             self.args.darshan, log_version, library_version
         )
         report = darshan.DarshanReport(filename, read_all=True)
-
         if "DXT_POSIX" not in report.records and "DXT_MPIIO" not in report.records:
             self.logger.info("No DXT trace data found in file: {}".format(filename))
             exit()

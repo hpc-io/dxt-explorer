@@ -886,7 +886,6 @@ file = options["file1"].split(".darshan")[0]
 command = "drishti --html --light --size {} --json {} {}.darshan".format(
     size, json_file_path, file
 )
-
 args = shlex.split(command)
 s = subprocess.Popen(args, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
 sOutput, sError = s.communicate()
