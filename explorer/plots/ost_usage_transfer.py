@@ -146,25 +146,29 @@ if "MPIIO" in df["api"].unique():
                     else:
                         dict_request_sizes_mpiio_write[ost] += ost_size
 
-posix_read = pd.DataFrame(
-    dict_request_sizes_posix_read.items(), columns=["OST", "size"]
-)
-posix_read["operation"] = "read"
+if dict_request_sizes_posix_read:
+    posix_read = pd.DataFrame(
+        dict_request_sizes_posix_read.items(), columns=["OST", "size"]
+    )
+    posix_read["operation"] = "read"
 
-posix_write = pd.DataFrame(
-    dict_request_sizes_posix_write.items(), columns=["OST", "size"]
-)
-posix_write["operation"] = "write"
+if dict_request_sizes_posix_write:
+    posix_write = pd.DataFrame(
+        dict_request_sizes_posix_write.items(), columns=["OST", "size"]
+    )
+    posix_write["operation"] = "write"
 
-mpiio_read = pd.DataFrame(
-    dict_request_sizes_mpiio_read.items(), columns=["OST", "size"]
-)
-mpiio_read["operation"] = "read"
+if dict_request_sizes_mpiio_read:
+    mpiio_read = pd.DataFrame(
+        dict_request_sizes_mpiio_read.items(), columns=["OST", "size"]
+    )
+    mpiio_read["operation"] = "read"
 
-mpiio_write = pd.DataFrame(
-    dict_request_sizes_mpiio_write.items(), columns=["OST", "size"]
-)
-mpiio_write["operation"] = "write"
+if dict_request_sizes_mpiio_write:
+    mpiio_write = pd.DataFrame(
+        dict_request_sizes_mpiio_write.items(), columns=["OST", "size"]
+    )
+    mpiio_write["operation"] = "write"
 
 request_df_posix = pd.concat([posix_read, posix_write])
 request_df_posix["api"] = "POSIX"
