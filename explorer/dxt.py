@@ -85,9 +85,10 @@ class Explorer:
 
         log_version = information["metadata"]["lib_ver"]
         library_version = darshanll.darshan.backend.cffi_backend.get_lib_version()
-        filename = self.check_log_version(
-            self.args.darshan, log_version, library_version
-        )
+        filename = self.args.darshan
+        # filename = self.check_log_version(
+        #     self.args.darshan, log_version, library_version
+        # )
         report = darshan.DarshanReport(filename, read_all=True)
         if "DXT_POSIX" not in report.records and "DXT_MPIIO" not in report.records:
             self.logger.info("No DXT trace data found in file: {}".format(filename))
