@@ -80,8 +80,8 @@ class Explorer:
         else:
             self.prefix = self.args.prefix
 
-        log = darshanll.log_open(self.args.darshan)
-        information = darshanll.log_get_job(log)
+        # log = darshanll.log_open(self.args.darshan)
+        # information = darshanll.log_get_job(log)
 
         # log_version = information["metadata"]["lib_ver"]
         # library_version = darshanll.darshan.backend.cffi_backend.get_lib_version()
