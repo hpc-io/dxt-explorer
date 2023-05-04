@@ -1,2 +1,2 @@
-requests>=2.25.0
+urllib3<2
 sphinxemoji
