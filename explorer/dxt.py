@@ -83,8 +83,8 @@ class Explorer:
         log = darshanll.log_open(self.args.darshan)
         information = darshanll.log_get_job(log)
 
-        log_version = information["metadata"]["lib_ver"]
-        library_version = darshanll.darshan.backend.cffi_backend.get_lib_version()
+        # log_version = information["metadata"]["lib_ver"]
+        # library_version = darshanll.darshan.backend.cffi_backend.get_lib_version()
         filename = self.args.darshan
         # filename = self.check_log_version(
         #     self.args.darshan, log_version, library_version
