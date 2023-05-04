@@ -34,7 +34,7 @@ import pkg_resources
 import pyranges as pr
 import logging.handlers
 import pyarrow.feather as feather
-import darshan.backend.cffi_backend as darshanll
+# import darshan.backend.cffi_backend as darshanll
 
 from explorer import version as dxt_version
 from packaging import version
