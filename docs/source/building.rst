@@ -24,6 +24,28 @@ Installing through git
     .. code-block:: bash
         
         module load darshan
+        
+.. note::
+
+    In Summit at OLCF you need to follow this set of instructions.
+    
+    .. code-block:: bash
+    
+        module load python
+    
+        conda create -n py310-dxt python=3.10
+        source activate py310-dxt
+        conda install arrow-cpp=10.0.1 pyarrow=10.0.1
+
+        git clone https://github.com/hpc-io/dxt-explorer
+        cd dxt-explorer
+
+        pip install .
+
+        dxt-explorer samples/YOUR-DARSHAN-FILE.darshan
+
+        conda deactivate
+
 
 To use DXT Explorer, you first need to get the Darshan version installed on system so that the matching pyDarshan version is installed from pip. To do this, run the following command (make sure you have Python 3 installed on your system):
 
