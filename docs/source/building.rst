@@ -46,20 +46,11 @@ Installing through git
 
         conda deactivate
 
-
-To use DXT Explorer, you first need to get the Darshan version installed on system so that the matching pyDarshan version is installed from pip. To do this, run the following command (make sure you have Python 3 installed on your system):
-
-.. code-block:: bash
-
-    bash prepare.sh
-
-This command will create a constraint.txt file which will contain the pyDarshan version to be installed through pip. 
-
 Run the below command to install some required Python libraries:
 
 .. code-block:: bash
 
-    pip install -r requirements.txt -c constraints.txt
+    pip install -r requirements.txt
 
 Then install dxt-explorer using the following command:
 
