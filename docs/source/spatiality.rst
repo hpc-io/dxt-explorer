@@ -1,7 +1,7 @@
 Spatiality Plot
 ===================================
 
-Once you have the dependencies and DXT Explorer installed, you can run:
+Once the dependencies and DXT Explorer have been installed:
 
 .. code-block:: bash
 
@@ -13,7 +13,7 @@ Once you have the dependencies and DXT Explorer installed, you can run:
 
 This will generate the base ``spatiality.html`` plot. Spatiality refers to the file offsets between consecutive I/O accesses. Typical spatial access patterns are contiguous, strided, or random. The ``spatiality.html`` plot shows the spatiality of the accesses in file made by each rank. Contextual information link ``Rank``, ``Operation``, ``Duration``, ``Size``, ``Offset``, ``Lustre OST`` can also be seen by hovering over a request. 
 
-You are expected to visualize the following messages in the console:
+This is the expected console output when calling DXT Explorer:
 
 .. code-block:: text
 
@@ -24,5 +24,5 @@ You are expected to visualize the following messages in the console:
    2022-11-02 12:58:30,834 dxt - INFO - SUCCESS: <Path to the newly created index.html>
    2022-11-02 12:58:30,834 dxt - INFO - You can open the index.html file in your browser to interactively explore all plots
 
-You can find a couple of interactive examples of DXT traces collected from FLASH, E2E, and OpenPMD in the `companion repository <https://jeanbez.gitlab.io/pdsw-2021>`_ for our PDSW'21 paper.
+Interactive examples of DXT traces collected from FLASH, E2E, and OpenPMD are available in the `companion repository <https://jeanbez.gitlab.io/pdsw-2021>`_ of our PDSW'21 paper.
 

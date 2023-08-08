@@ -1,7 +1,7 @@
 Unbalanced Workload Plot
 ===================================
 
-Once you have the dependencies and DXT Explorer installed, you can run:
+Once the dependencies and DXT Explorer have been installed:
 
 .. code-block:: bash
 
@@ -13,7 +13,7 @@ Once you have the dependencies and DXT Explorer installed, you can run:
 
 This will generate the base ``operation.html`` plot. On the right of the ``operation.html`` plot, a dropdown menu will be displayed which will have an option to display ``unbalanced workload``, if that bottleneck exists. Upon clicking that button, the unbalanced ranks will be highlighted on the graph with the other operations in the background in an opaque color. Contextual information link ``Rank``, ``Operation``, ``Duration``, ``Size``, ``Offset``, ``Lustre OST`` can also be seen by hovering over a request. 
 
-You are expected to visualize the following messages in the console:
+This is the expected console output when calling DXT Explorer:
 
 .. code-block:: text
 

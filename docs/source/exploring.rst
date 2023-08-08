@@ -1,7 +1,7 @@
 Exploring
 ===================================
 
-Once you have the dependencies and DXT Explorer installed, you can run:
+Once the dependencies and DXT Explorer have been installed:
 
 .. code-block:: bash
 
@@ -44,13 +44,13 @@ Once you have the dependencies and DXT Explorer installed, you can run:
     -csv, --csv           Save the parsed DXT trace data into a csv
     -v, --version         show program's version number and exit
 
-DXT Explorer will generate by default an ``index.html`` file with links to all interactive plots that you can open in any browser to explore. If you enabled the transfer or spatiality plots, additional ``.html`` files will be generated, one for each type and the link to those html files will be provided in the ``index.html`` file. 
+DXT Explorer will generate by default an ``index.html`` file with links to all interactive plots that can be opened in any browser to explore. If the transfer or spatiality plots were enabled, additional ``.html`` files will be generated, one for each type and the link to those html files will be provided in the ``index.html`` file. 
 
 .. image:: _static/images/dxt-index.png
   :width: 800
   :alt: Index Page
 
-You are expected to visualize the following messages in the console:
+This is the expected console output when calling DXT Explorer:
 
 .. code-block:: text
 
@@ -61,4 +61,4 @@ You are expected to visualize the following messages in the console:
    2022-11-02 12:58:30,834 dxt - INFO - SUCCESS: <Path to the newly created Index.html>
    2022-11-02 12:58:30,834 dxt - INFO - You can open the index.html file in your browser to interactively explore all plots
 
-You can find a couple of interactive examples of DXT traces collected from FLASH, E2E, and OpenPMD in the `companion repository <https://jeanbez.gitlab.io/pdsw-2021>`_ for our PDSW'21 paper.
+Interactive examples of DXT traces collected from FLASH, E2E, and OpenPMD are available in the `companion repository <https://jeanbez.gitlab.io/pdsw-2021>`_ of our PDSW'21 paper.

@@ -1,7 +1,7 @@
 I/O Phase Plot
 ===================================
 
-Once you have the dependencies and DXT Explorer installed, you can run:
+Once the dependencies and DXT Explorer have been installed:
 
 .. code-block:: bash
 
@@ -13,7 +13,7 @@ Once you have the dependencies and DXT Explorer installed, you can run:
 
 This will generate the base ``io-phase.html`` plot. The ``io-phase.html`` plot shows the different I/O Phases in the data. The plot also shows information regarding the number of I/O phases in each interface (``MPIIO and POSIX``) and the threshold value used to merge the phases. The threshold value is computed by summing the mean and standard deviation of all the intervals between the I/O phases. Contextual information link ``Fastest Rank``, ``Fastest Rank Duration``, ``Slowest Rank``, ``Slowest Rank Duration`` can also be seen by hovering over a phase. 
 
-You are expected to visualize the following messages in the console:
+This is the expected console output when calling DXT Explorer:
 
 .. code-block:: text
 

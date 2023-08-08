@@ -1,7 +1,7 @@
 OST Usage Operation Plot
 ===================================
 
-Once you have the dependencies and DXT Explorer installed, you can run:
+Once the dependencies and DXT Explorer have been installed:
 
 .. code-block:: bash
 
@@ -15,7 +15,7 @@ This will generate the ``ost-usage-operation.html`` plot. The ``ost-usage-operat
 
 ``Warning``: This plot will only be generated if the application was exectued on Lustre File System and Darshan collected those metrics. 
 
-You are expected to visualize the following messages in the console:
+This is the expected console output when calling DXT Explorer:
 
 .. code-block:: text
 

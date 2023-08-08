@@ -15,7 +15,7 @@ Installing through git
 
 .. note::
 
-    In NERSC systems (i.e., Cori or Perlmutter) you might need to load the Darshan and Python module if it is not already loaded. For other systems, please refer to their documentation to use the correct module name.
+    In Perlmutter (NERSC) you might need to load Darshan and Python modules if they are not already loaded. For other systems, please refer to their documentation to use the correct module name.
     
     .. code-block:: bash
 
@@ -67,7 +67,6 @@ Then install dxt-explorer using the following command:
 
     pip install .
 
-You also need to have Darshan Utils installed (``darshan-dxt-parser``) and available in your path.
 
 -----------------------------------
 Installing through pip
