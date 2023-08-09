@@ -21,30 +21,30 @@ so.
 
 import os
 import sys
-import csv
-import shlex
 import time
+import shlex
+import logging
+import darshan
 import argparse
 import datetime
 import subprocess
 import webbrowser
-import logging
-import logging.handlers
+import pandas as pd
 import pkg_resources
+import pyranges as pr
+import logging.handlers
+import pyarrow.feather as feather
+# import darshan.backend.cffi_backend as darshanll
 
-from distutils.spawn import find_executable
-from explorer import version
+from explorer import version as dxt_version
+from packaging import version
 
 
 class Explorer:
-
     def __init__(self, args):
         """Initialize the explorer."""
         self.args = args
-
         self.configure_log()
-        self.has_dxt_parser()
-        self.has_r_support()
 
         self.generated_files = {}
 
@@ -52,7 +52,7 @@ class Explorer:
 
     def configure_log(self):
         """Configure the logging system."""
-        self.logger = logging.getLogger('DXT Explorer')
+        self.logger = logging.getLogger("DXT Explorer")
 
         if self.args.debug:
             self.logger.setLevel(logging.DEBUG)
@@ -61,7 +61,7 @@ class Explorer:
 
         # Defines the format of the logger
         formatter = logging.Formatter(
-            '%(asctime)s %(module)s - %(levelname)s - %(message)s'
+            "%(asctime)s %(module)s - %(levelname)s - %(message)s"
         )
 
         console = logging.StreamHandler()
@@ -74,27 +74,48 @@ class Explorer:
         self.explorer_start_time = time.time()
 
         self.is_darshan_file(self.args.darshan)
-        self.parse(self.args.darshan)
 
         if not self.args.prefix:
             self.prefix = os.getcwd()
         else:
             self.prefix = self.args.prefix
 
-        if self.args.list_files:
-            self.list_files(self.args.darshan)
+        # log = darshanll.log_open(self.args.darshan)
+        # information = darshanll.log_get_job(log)
 
+        # log_version = information["metadata"]["lib_ver"]
+        # library_version = darshanll.darshan.backend.cffi_backend.get_lib_version()
+        filename = self.args.darshan
+        # filename = self.check_log_version(
+        #     self.args.darshan, log_version, library_version
+        # )
+        report = darshan.DarshanReport(filename, read_all=True)
+        if "DXT_POSIX" not in report.records and "DXT_MPIIO" not in report.records:
+            self.logger.info("No DXT trace data found in file: {}".format(filename))
             exit()
 
-        self.generate_plot(self.args.darshan)
+        if self.args.list_files:
+            self.list_files(report)
+            exit()
+
+        self.generate_plot(filename, report)
 
         if self.args.transfer:
-            self.generate_transfer_plot(self.args.darshan)
+            self.generate_transfer_plot(filename, report)
 
         if self.args.spatiality:
-            self.generate_spatiality_plot(self.args.darshan)
+            self.generate_spatiality_plot(filename, report)
 
-        self.generate_index(self.args.darshan)
+        if self.args.io_phase:
+            self.generate_phase_plot(filename, report)
+
+        if self.args.ost_usage_operation:
+            self.generate_ost_usage_operation_plot(filename, report)
+
+        if self.args.ost_usage_transfer:
+            self.generate_ost_usage_transfer_plot(filename, report)
+
+        self.generate_index(filename, report)
 
     def get_directory(self):
         """Determine the install path to find the execution scripts."""
@@ -110,419 +131,977 @@ class Explorer:
     def is_darshan_file(self, file):
         """Check if the provided file exists and is a .darshan file."""
         if not os.path.exists(self.args.darshan):
-            self.logger.error('{}: NOT FOUND'.format(file))
+            self.logger.error("{}: NOT FOUND".format(file))
 
             exit(-1)
 
-        if not self.args.darshan.endswith('.darshan'):
-            self.logger.error('{} is not a .darshan file'.format(file))
+        if not self.args.darshan.endswith(".darshan"):
+            self.logger.error("{} is not a .darshan file".format(file))
 
             exit(-1)
 
-    def has_dxt_parser(self):
-        """Check if `darshan-dxt-parser` is on PATH."""
-        if find_executable('darshan-dxt-parser') is not None:
-            self.logger.debug('darshan-dxt-parser: FOUND')
-        else:
-            self.logger.error('darshan-dxt-parser: NOT FOUND')
-
-            exit(-1)
-
-    def has_r_support(self):
-        """Check if `Rscript` is on PATH."""
-        if find_executable('Rscript') is not None:
-            self.logger.debug('Rscript: FOUND')
-        else:
-            self.logger.error('Rscript: NOT FOUND')
-
-            exit(-1)
-
-    def dxt(self, file):
-        """Parse the Darshan file to generate the .dxt trace file."""
-        if os.path.exists(file + '.dxt'):
-            self.logger.debug('using existing parsed Darshan file')
-
-            return
-
-        command = 'darshan-dxt-parser {0}'.format(file)
-
-        args = shlex.split(command)
-
-        self.logger.debug('parsing {} file'.format(file))
-
-        with open('{}.dxt'.format(file), 'w') as output:
-            s = subprocess.run(args, stderr=subprocess.PIPE, stdout=output)
-
-            assert s.returncode == 0
-
-    def parse(self, file):
-        """Parse the .darshan.dxt file to generate a CSV file."""
-        self.dxt(file)
-
-        if os.path.exists(file + '.dxt.csv'):
-            self.logger.debug('using existing intermediate CSV file')
-
-            return
-
-        self.logger.debug('generating an intermediate CSV file')
-
-        with open(file + '.dxt') as f:
-            lines = f.readlines()
-            file_id = None
-
-            with open(file + '.dxt.csv', 'w', newline='') as csvfile:
-                w = csv.writer(csvfile)
-
-                w.writerow([
-                    'file_id',
-                    'api',
-                    'rank',
-                    'operation',
-                    'segment',
-                    'offset',
-                    'size',
-                    'start',
-                    'end',
-                    'ost'
-                ])
-
-                for line in lines:
-                    if 'file_id' in line:
-                        file_id = line.split(',')[1].split(':')[1].strip()
-
-                    if 'X_POSIX' in line:
-                        info = line.replace('[', '').replace(']', '').split()
-
-                        api = info[0]
-                        rank = info[1]
-                        operation = info[2]
-                        segment = info[3]
-                        offset = info[4]
-                        size = info[5]
-                        start = info[6]
-                        end = info[7]
-
-                        if len(info) == 9:
-                            ost = info[8]
-                        else:
-                            ost = None
-
-                        w.writerow([
-                            file_id,
-                            api.replace('X_', ''),
-                            rank,
-                            operation,
-                            segment,
-                            offset,
-                            size,
-                            start,
-                            end,
-                            ost
-                        ])
-
-                    if 'X_MPIIO' in line:
-                        info = line.split()
-
-                        api = info[0]
-                        rank = info[1]
-                        operation = info[2]
-
-                        # Newer Darshan DXT logs have segment for MPI-IO
-                        if len(info) == 8:
-                            segment = info[3]
-                            offset = info[4]
-                            size = info[5]
-                            start = info[6]
-                            end = info[7]
-                        else:
-                            segment = -1
-                            offset = info[3]
-                            size = info[4]
-                            start = info[5]
-                            end = info[6]
-
-                        if len(info) == 9:
-                            ost = info[8]
-                        else:
-                            ost = None
-
-                        w.writerow([
-                            file_id,
-                            api.replace('X_', ''),
-                            rank,
-                            operation,
-                            segment,
-                            offset,
-                            size,
-                            start,
-                            end,
-                            ost
-                        ])
-
-    def list_files(self, file, display=True):
-        files = {}
-
+    def list_files(self, report, display=True):
+        """Create a dictionary of file id as key and file name as value."""
         total = 0
+        file_ids = report.log["name_records"]
+        for key, value in dict(file_ids).items():
+            if value == "<STDOUT>":
+                del file_ids[key]
+            if value == "<STDERR>":
+                del file_ids[key]
 
-        with open(file + '.dxt') as f:
-            lines = f.readlines()
-
-            for line in lines:
-                if 'file_id' in line:
-                    file_id = line.split(',')[1].split(':')[1].strip()
-                    file_name = line.split(',')[2].split(':')[1].strip()
-
-                    if file_id not in files.keys():
-                        files[file_id] = file_name
-
-                    total += 1
-
-        if display:
-            for file_id, file_name in files.items():
-                self.logger.info('FILE: {} (ID {})'.format(file_name, file_id))
-
-            self.logger.info('{} I/O trace observation records from {} files'.format(total, len(files)))
+        for file_id, file_name in file_ids.items():
+            total += 1
+            if display:
+                self.logger.info("FILE: {} (ID {})".format(file_name, file_id))
 
         if total == 0:
-            self.logger.critical('No DXT records found in {}'.format(self.args.darshan))
-            self.logger.critical('To enable Darshan DXT, set this before your application runs:')
-            self.logger.critical('$ export DXT_ENABLE_IO_TRACE=1')
+            self.logger.critical("No DXT records found in {}".format(self.args.darshan))
+            self.logger.critical(
+                "To enable Darshan DXT, set this before your application runs:"
+            )
+            self.logger.critical("$ export DXT_ENABLE_IO_TRACE=1")
 
             exit()
 
-        return files
+        return file_ids
 
-    def subset_dataset(self, file, file_ids):
-        self.logger.info('generating datasets')
+    def get_id_to_record_mapping(self, report, mod):
+        """
+        Get mapping of id to records for a given module.
+
+        Arguments:
+            report (DarshanReport): the the record belongs to
+            mod (String): name of module
+
+        Returns:
+            Dictionary with lists of records by their id
+        """
+
+        if mod not in report.records:
+            return []
+
+        recs_by_id = {}
+        for i, rec in enumerate(report.records[mod]):
+            if rec["id"] not in recs_by_id:
+                recs_by_id[rec["id"]] = []
+
+            if mod in ["LUSTRE"]:
+                recs_by_id[rec["id"]] = [rec]
+            else:
+                recs_by_id[rec["id"]].append(rec)
+
+        return recs_by_id
+
+    def dxt_record_attach_osts_inplace(self, report, record, lustre_records_by_id):
+        """
+        For a given DXT record, attach targeted Lustre OSTs.
+
+        Arguments:
+            report: DarshanReport the the record belongs to
+            record: DarshanRecord to update
+            lustre_records_by_id: mapping to use (recreating the mapping is potentially expensive for larger logs)
+
+        Returns:
+            reference to updated record
+        """
+
+        rec = record
+
+        if rec["id"] not in lustre_records_by_id:
+            raise Exception(
+                self.logger.info(
+                    "No matching lustre records found. (This is not necessarily an error, just that the file may not reside on a Lustre system.)"
+                )
+            )
+
+        lrec = lustre_records_by_id[rec["id"]][0]
+        lcounters = dict(zip(report.counters["LUSTRE"]["counters"], lrec["counters"]))
+
+        osts = list(lrec["ost_ids"])
+
+        stripe_size = lcounters["LUSTRE_STRIPE_SIZE"]
+        stripe_count = lcounters["LUSTRE_STRIPE_WIDTH"]
+
+        for op in ["read_segments", "write_segments"]:
+            segs = rec[op]
+
+            for access in segs:
+                access["osts"] = []
+
+                offset = access["offset"]
+                length = access["length"]
+
+                cur_offset = offset
+                ost_idx = int(offset / stripe_size) % stripe_count
+
+                add_count = 0
+                while cur_offset <= (offset + length):
+                    ost_id = osts[ost_idx]
+                    access["osts"].append(ost_id)
+
+                    cur_offset = (int(cur_offset / stripe_size) + 1) * stripe_size
+
+                    if ost_idx == (stripe_count - 1):
+                        ost_idx = 0
+                    else:
+                        ost_idx += 1
+
+                    add_count += 1
+                    if add_count >= stripe_count:
+                        break
+        return rec
+
+    def create_dataframe(
+        self, file_id, subset_dataset_file, df_posix=None, df_mpiio=None
+    ):
+        """Create a dataframe from parsed records."""
+
+        column_names = [
+            "file_id",
+            "api",
+            "rank",
+            "operation",
+            "segment",
+            "offset",
+            "size",
+            "start",
+            "end",
+            "osts",
+        ]
+        total_logs = 0
+        runtime = 0
+
+        df = []
+
+        if not df_posix.empty:
+            df_posix_temp = df_posix.loc[df_posix["id"] == file_id]
+            for index, row in df_posix_temp.iterrows():
+                write_segments = row["write_segments"]
+                write_segments["operation"] = "write"
+                read_segments = row["read_segments"]
+                read_segments["operation"] = "read"
+
+                temp_result = pd.concat([write_segments, read_segments])
+                temp_result["file_id"] = file_id
+                temp_result["rank"] = row["rank"]
+                temp_result["api"] = "POSIX"
+
+                temp_result = temp_result.rename(
+                    columns={"length": "size", "start_time": "start", "end_time": "end"}
+                )
+
+                total_logs = total_logs + len(temp_result)
+                runtime = max(runtime, temp_result["end"].max())
+
+                temp_result["start"] = temp_result["start"].round(decimals=4)
+                temp_result["end"] = temp_result["end"].round(decimals=4)
+
+                temp_result.index.name = "segment"
+                temp_result.reset_index(inplace=True)
+                temp_result = temp_result.reindex(columns=column_names)
+
+                df.append(temp_result)
+
+        if not df_mpiio.empty:
+            df_mpiio_temp = df_mpiio.loc[df_mpiio["id"] == file_id]
+            for index, row in df_mpiio_temp.iterrows():
+                write_segments = row["write_segments"]
+                write_segments["operation"] = "write"
+                read_segments = row["read_segments"]
+                read_segments["operation"] = "read"
+
+                temp_result = pd.concat([write_segments, read_segments])
+                temp_result["file_id"] = file_id
+                temp_result["rank"] = row["rank"]
+                temp_result["api"] = "MPIIO"
+
+                temp_result = temp_result.rename(
+                    columns={"length": "size", "start_time": "start", "end_time": "end"}
+                )
+
+                total_logs = total_logs + len(temp_result)
+                runtime = max(runtime, temp_result["end"].max())
+
+                temp_result["start"] = temp_result["start"].round(decimals=4)
+                temp_result["end"] = temp_result["end"].round(decimals=4)
+
+                temp_result.index.name = "segment"
+                temp_result.reset_index(inplace=True)
+                temp_result = temp_result.reindex(columns=column_names)
+
+                df.append(temp_result)
+
+        result = pd.DataFrame()
+        if df:
+            result = pd.concat(df, axis=0, ignore_index=True)
+
+        feather.write_feather(
+            result, subset_dataset_file + ".dxt", compression="uncompressed"
+        )
+
+        if self.args.csv:
+            result.to_csv(
+                subset_dataset_file + ".dxt.csv", mode="a", index=False, header=True
+            )
+        column_names = ["total_logs", "runtime"]
+        result = pd.DataFrame(columns=column_names)
+
+        row = [total_logs, runtime]
+        result.loc[len(result.index)] = row
+        result.to_csv(
+            subset_dataset_file + ".summary.dxt.csv", mode="w", index=False, header=True
+        )
+
+    def subset_dataset(self, file, file_ids, report):
+        """Subset the dataset based on file id and save to a csv file."""
+        self.logger.info("generating dataframes")
+        lustre_records_by_id = self.get_id_to_record_mapping(report, "LUSTRE")
+
+        if lustre_records_by_id:
+
+            def graceful_wrapper(r, rec, lustre_records_by_id):
+                try:
+                    self.dxt_record_attach_osts_inplace(
+                        report, rec, lustre_records_by_id
+                    )
+                except Exception:
+                    pass
+
+            list(
+                map(
+                    lambda rec: graceful_wrapper(report, rec, lustre_records_by_id),
+                    report.records["DXT_POSIX"],
+                )
+            )
+            list(
+                map(
+                    lambda rec: graceful_wrapper(report, rec, lustre_records_by_id),
+                    report.records["DXT_MPIIO"],
+                )
+            )
+
+        df_posix = []
+        if "DXT_POSIX" in report.records:
+            df_posix = report.records["DXT_POSIX"].to_df()
+
+        df_mpiio = []
+        if "DXT_MPIIO" in report.records:
+            df_mpiio = report.records["DXT_MPIIO"].to_df()
+
+        df_posix = pd.DataFrame(df_posix)
+        df_mpiio = pd.DataFrame(df_mpiio)
 
         for file_id in file_ids:
-            subset_dataset_file = '{}.{}'.format(file, file_id)
+            subset_dataset_file = "{}.{}".format(file, file_id)
 
-            if os.path.exists(subset_dataset_file + '.dxt.csv'):
-                self.logger.debug('using existing parsed Darshan file')
-
+            if os.path.exists(subset_dataset_file + ".dxt"):
+                self.logger.debug("using existing parsed Darshan file")
                 continue
 
-            with open(file + '.dxt.csv') as f:
-                rows = csv.DictReader(f)
+            self.create_dataframe(file_id, subset_dataset_file, df_posix, df_mpiio)
 
-                with open(subset_dataset_file + '.dxt.csv', 'w', newline='') as csvfile:
-                    w = csv.writer(csvfile)
+    def merge_overlapping_io_phases(self, overlapping_df, df, module):
+        io_phases_df = pd.DataFrame(
+            columns=[
+                "index",
+                "api",
+                "operation",
+                "start",
+                "end",
+                "duration",
+                "fastest_rank",
+                "fastest_rank_start",
+                "fastest_rank_end",
+                "fastest_rank_duration",
+                "slowest_rank",
+                "slowest_rank_start",
+                "slowest_rank_end",
+                "slowest_rank_duration",
+                "threshold",
+            ]
+        )
 
-                    w.writerow([
-                        'file_id',
-                        'api',
-                        'rank',
-                        'operation',
-                        'segment',
-                        'offset',
-                        'size',
-                        'start',
-                        'end',
-                        'ost'
-                    ])
+        overlapping_df_end = overlapping_df[["End"]].to_numpy()
+        overlapping_df_start = overlapping_df[["Start"]].to_numpy()
+        interval_duration = 0
 
-                    for row in rows:
-                        if file_id == row['file_id']:
-                            w.writerow(row.values())
+        for i in range(len(overlapping_df_end) - 1):
+            interval_start = overlapping_df_end[i]
+            interval_end = overlapping_df_start[i + 1]
+            interval_duration = interval_duration + (interval_end - interval_start)
 
-    def generate_plot(self, file):
+        threshold = float(interval_duration / (len(overlapping_df_end) - 1))
+        merged_df = pd.DataFrame(columns=["Start", "End"])
+
+        if len(overlapping_df_end) != 0:
+            prev_value = overlapping_df_end[0]
+            prev_index = 0
+
+            for i in range(1, len(overlapping_df_end)):
+                if overlapping_df_start[i] - prev_value <= threshold:
+                    prev_value = overlapping_df_end[i]
+                if (
+                    overlapping_df_start[i] - prev_value > threshold
+                    or i == len(overlapping_df_end) - 1
+                ):
+                    merged_df.loc[len(merged_df.index)] = [
+                        float(overlapping_df_start[prev_index]),
+                        float(prev_value),
+                    ]
+                    prev_index = i
+                    prev_value = overlapping_df_end[i]
+
+        if not merged_df.empty:
+            for i in range(len(merged_df)):
+                start = merged_df["Start"].iat[i]
+                end = merged_df["End"].iat[i]
+
+                df_temp = df[df["start"] >= start]
+                df_temp = df_temp[df_temp["end"] <= end]
+                df_temp["duration"] = df_temp["end"] - df_temp["start"]
+
+                min = df_temp.loc[df_temp["end"] == df_temp["end"].min()]
+                fastest_rank = min["rank"].tolist()
+                fastest_rank_start = min["start"].tolist()
+                fastest_rank_end = min["end"].tolist()
+                fastest_rank_duration = min["duration"].tolist()
+                if fastest_rank:
+                    fastest_rank = fastest_rank[0]
+                    fastest_rank_duration = fastest_rank_duration[0]
+                    fastest_rank_start = fastest_rank_start[0]
+                    fastest_rank_end = fastest_rank_end[0]
+
+                max = df_temp.loc[df_temp["end"] == df_temp["end"].max()]
+                slowest_rank = max["rank"].tolist()
+                slowest_rank_start = max["start"].tolist()
+                slowest_rank_end = max["end"].tolist()
+                slowest_rank_duration = max["duration"].tolist()
+                if slowest_rank:
+                    slowest_rank = slowest_rank[0]
+                    slowest_rank_duration = slowest_rank_duration[0]
+                    slowest_rank_start = slowest_rank_start[0]
+                    slowest_rank_end = slowest_rank_end[0]
+
+                operation = ""
+                if df_temp["operation"].eq("read").any():
+                    if df_temp["operation"].eq("write").any():
+                        operation = "read&write"
+                    else:
+                        operation = "read"
+                elif df_temp["operation"].eq("write").any():
+                    operation = "write"
+
+                start = df_temp["start"].min()
+                end = df_temp["end"].max()
+                duration = end - start
+                io_phases_df.loc[len(io_phases_df.index)] = [
+                    0,
+                    module,
+                    operation,
+                    start,
+                    end,
+                    duration,
+                    fastest_rank,
+                    fastest_rank_start,
+                    fastest_rank_end,
+                    fastest_rank_duration,
+                    slowest_rank,
+                    slowest_rank_start,
+                    slowest_rank_end,
+                    slowest_rank_duration,
+                    threshold,
+                ]
+
+        io_phases_df.dropna(inplace=True)
+        return io_phases_df
+
+    def calculate_io_phases(
+        self, file, file_ids, file_id=None, snapshot=None, snapshot_flag=False
+    ):
+        if snapshot_flag:
+            subset_dataset_file = "{}.{}.{}-{}.{}".format(
+                file, file_id, "snapshot", snapshot, "dxt"
+            )
+            file_name = subset_dataset_file.split(".dxt")[0]
+            phases_file = "{}.{}".format(file_name, "io_phases")
+
+            if not os.path.exists(phases_file):
+                self.logger.info("generating I/O phases dataframe")
+                df = feather.read_feather(subset_dataset_file)
+                if not df.empty:
+                    df_selected = df[["api", "start", "end"]].copy()
+                    df_selected["start"] = df_selected["start"] * 10000
+                    df_selected["end"] = df_selected["end"] * 10000
+                    df_selected.columns = ["Chromosome", "Start", "End"]
+
+                    gr = pr.PyRanges(df_selected)
+                    overlapping = gr.merge()
+                    overlapping = overlapping.as_df()
+
+                    overlapping["Start"] = overlapping["Start"] / 10000
+                    overlapping["End"] = overlapping["End"] / 10000
+
+                    df_posix = df[df["api"] == "POSIX"]
+                    df_posix = df_posix.sort_values("start")
+
+                    overlapping_POSIX = overlapping[
+                        overlapping["Chromosome"] == "POSIX"
+                    ]
+
+                    io_phases_df_posix = self.merge_overlapping_io_phases(
+                        overlapping_POSIX, df_posix, "POSIX"
+                    )
+
+                    df_mpiio = df[df["api"] == "MPIIO"]
+                    df_mpiio = df_mpiio.sort_values("start")
+
+                    overlapping_MPIIO = overlapping[
+                        overlapping["Chromosome"] == "MPIIO"
+                    ]
+
+                    io_phases_df_mpiio = self.merge_overlapping_io_phases(
+                        overlapping_MPIIO, df_mpiio, "MPIIO"
+                    )
+
+                    frames = [io_phases_df_posix, io_phases_df_mpiio]
+                    result = pd.concat(frames)
+                    feather.write_feather(result, phases_file)
+                else:
+                    result = pd.DataFrame()
+                    feather.write_feather(result, phases_file)
+        else:
+            for file_id in file_ids:
+                if snapshot_flag:
+                    subset_dataset_file = "{}.{}.{}-{}.{}".format(
+                        file, file_id, "snapshot", snapshot, "dxt"
+                    )
+                else:
+                    subset_dataset_file = "{}.{}.{}".format(file, file_id, "dxt")
+
+                file_name = subset_dataset_file.split(".dxt")[0]
+                phases_file = "{}.{}".format(file_name, "io_phases")
+                if not os.path.exists(phases_file):
+                    self.logger.info("generating I/O phases dataframe")
+                    df = feather.read_feather(subset_dataset_file)
+                    if not df.empty:
+                        df_selected = df[["api", "start", "end"]].copy()
+                        df_selected["start"] = df_selected["start"] * 10000
+                        df_selected["end"] = df_selected["end"] * 10000
+                        df_selected.columns = ["Chromosome", "Start", "End"]
+
+                        gr = pr.PyRanges(df_selected)
+                        overlapping = gr.merge()
+                        overlapping = overlapping.as_df()
+
+                        overlapping["Start"] = overlapping["Start"] / 10000
+                        overlapping["End"] = overlapping["End"] / 10000
+
+                        df_posix = df[df["api"] == "POSIX"]
+                        df_posix = df_posix.sort_values("start")
+
+                        overlapping_POSIX = overlapping[
+                            overlapping["Chromosome"] == "POSIX"
+                        ]
+
+                        io_phases_df_posix = self.merge_overlapping_io_phases(
+                            overlapping_POSIX, df_posix, "POSIX"
+                        )
+
+                        df_mpiio = df[df["api"] == "MPIIO"]
+                        df_mpiio = df_mpiio.sort_values("start")
+
+                        overlapping_MPIIO = overlapping[
+                            overlapping["Chromosome"] == "MPIIO"
+                        ]
+
+                        io_phases_df_mpiio = self.merge_overlapping_io_phases(
+                            overlapping_MPIIO, df_mpiio, "MPIIO"
+                        )
+
+                        frames = [io_phases_df_posix, io_phases_df_mpiio]
+                        result = pd.concat(frames)
+                        feather.write_feather(result, phases_file)
+                    else:
+                        result = pd.DataFrame()
+                        feather.write_feather(result, phases_file)
+
+    def generate_plot(self, file, report):
         """Generate an interactive operation plot."""
-        limits = ''
+        limits = ""
+        insights = ""
 
         if self.args.start:
-            limits += ' -s {} '.format(self.args.start)
+            limits += " -s {} ".format(self.args.start)
 
         if self.args.end:
-            limits += ' -e {} '.format(self.args.end)
+            limits += " -e {} ".format(self.args.end)
 
         if self.args.start_rank:
-            limits += ' -n {} '.format(self.args.start_rank)
+            limits += " -n {} ".format(self.args.start_rank)
 
         if self.args.end_rank:
-            limits += ' -m {} '.format(self.args.end_rank)
+            limits += " -m {} ".format(self.args.end_rank)
 
-        file_ids = self.list_files(file)
+        if self.args.rank_zero_workload:
+            insights += " -0 {} ".format(self.args.rank_zero_workload)
 
-        # Generated the CSV files for each plot
-        self.subset_dataset(file, file_ids)
+        if self.args.unbalanced_workload:
+            insights += " -1 {} ".format(self.args.unbalanced_workload)
 
-        for file_id, file_name in file_ids.items():
-            output_file = '{}/{}-{}.html'.format(self.prefix, file_id, 'operation')
+        file_ids = self.list_files(report)
 
-            path = 'plots/operation.R'
-            script = pkg_resources.resource_filename(__name__, path)
+        if len(file_ids) == 0:
+            self.logger.info("No data to generate plots")
+        else:
+            self.subset_dataset(file, file_ids, report)
 
-            command = '{} -f {}.{}.dxt.csv {} -o {} -x {}'.format(
-                script,
-                file,
-                file_id,
-                limits,
-                output_file,
-                file_name
-            )
+            if self.args.stragglers:
+                insights += " -2 {} ".format(self.args.stragglers)
+                self.calculate_io_phases(file, file_ids)
 
-            args = shlex.split(command)
+            for file_id, file_name in file_ids.items():
+                csv_file = "{}.{}.summary.dxt.csv".format(file, file_id)
+                df = pd.read_csv(csv_file, sep=",")
 
-            self.logger.info('generating interactive operation for: {}'.format(file_name))
-            self.logger.debug(command)
+                total_logs = df["total_logs"].iloc[0]
+                runtime = df["runtime"].iloc[0]
 
-            s = subprocess.run(args, stderr=subprocess.PIPE, stdout=subprocess.PIPE)
+                threshold = 20000000
 
-            if s.returncode == 0:
-                if os.path.exists(output_file):
-                    self.logger.info('SUCCESS: {}'.format(output_file))
+                if total_logs > threshold:
+                    self.logger.info(
+                        "The total duration of the log is {}s. The plots will be split into small intervals.".format(
+                            str(runtime)
+                        )
+                    )
+
+                    csv_file = "{}.{}.dxt".format(file, file_id)
+                    df = pd.read_csv(csv_file, sep=",")
+
+                    start = 0
+                    increment_amount = total_logs / threshold
+                    increment_amount = runtime / increment_amount
+                    end = increment_amount
+                    snapshot = 1
+
+                    while end < runtime:
+                        val = input(
+                            "Do you want to generate plots for the next interval? Enter Y to continue, N to quit.\n"
+                        )
+
+                        if val == "Y" or val == "y":
+                            self.logger.info(
+                                "Generating plots for the interval {}s - {}s".format(
+                                    round(start, 4), round(end, 4)
+                                )
+                            )
+                            snapshot_file = "{}.{}.{}-{}.{}".format(
+                                file, file_id, "snapshot", snapshot, "dxt"
+                            )
+
+                            if not os.path.exists(snapshot_file):
+                                rows_before_start = df[
+                                    (df["start"] < start) & (df["end"] > start)
+                                ].copy()
+                                if not rows_before_start.empty:
+                                    rows_before_start.loc[:, "start"] = round(start, 4)
+
+                                rows_after_end = df[
+                                    (df["start"] < end) & (df["end"] > end)
+                                ].copy()
+
+                                if not rows_after_end.empty:
+                                    rows_after_end.loc[:, "end"] = round(end, 4)
+
+                                rows = df[df["start"] >= start]
+                                rows = rows[rows["end"] <= end]
+                                frames = [rows_before_start, rows_after_end, rows]
+
+                                df_snap = pd.concat(frames)
+                                df_snap.to_csv(snapshot_file)
+
+                            if self.args.stragglers:
+                                self.calculate_io_phases(
+                                    file, file_ids, file_id, snapshot, True
+                                )
+
+                            output_file = "{}/{}-{}-{}-{}.html".format(
+                                self.prefix, file_id, "snapshot", snapshot, "operation"
+                            )
+                            path = "plots/operation.py"
+                            script = pkg_resources.resource_filename(__name__, path)
+
+                            command = "python3 {} -f {}.{}.{}-{}.dxt -i {}.{}.{}-{}.io_phases {} {} -o {} -x {} -t {} -r {}".format(
+                                script,
+                                file,
+                                file_id,
+                                "snapshot",
+                                snapshot,
+                                file,
+                                file_id,
+                                "snapshot",
+                                snapshot,
+                                limits,
+                                insights,
+                                output_file,
+                                file_name,
+                                "large",
+                                runtime,
+                            )
+
+                            args = shlex.split(command)
+                            self.logger.info(
+                                "generating interactive operation for: {}".format(
+                                    file_name
+                                )
+                            )
+                            self.logger.debug(command)
+                            s = subprocess.run(args)
+
+                            if s.returncode == 0:
+                                if os.path.exists(output_file):
+                                    self.logger.info("SUCCESS: {}".format(output_file))
+                                else:
+                                    self.logger.warning(
+                                        "no data to generate interactive plots"
+                                    )
+
+                                if self.args.browser:
+                                    webbrowser.open(
+                                        "file://{}".format(output_file), new=2
+                                    )
+                            else:
+                                self.logger.error(
+                                    "failed to generate the interactive plots (error %s)",
+                                    s.returncode,
+                                )
+
+                                sys.exit(os.EX_SOFTWARE)
+
+                            start = end
+                            end = end + increment_amount
+                            snapshot += 1
+                        elif val == "N" or val == "n":
+                            self.logger.info("Quitting the application!")
+                            break
+                        else:
+                            self.logger.info("Incorrect input. Please try again.")
                 else:
-                    self.logger.warning('no data to generate interactive plots')
+                    output_file = "{}/{}-{}.html".format(
+                        self.prefix, file_id, "operation"
+                    )
+                    path = "plots/operation.py"
+                    script = pkg_resources.resource_filename(__name__, path)
 
-                if self.args.browser:
-                    webbrowser.open('file://{}'.format(output_file), new=2)
+                    command = "python3 {} -f {}.{}.dxt -i {}.{}.io_phases{} {} -o {} -x {}".format(
+                        script,
+                        file,
+                        file_id,
+                        file,
+                        file_id,
+                        limits,
+                        insights,
+                        output_file,
+                        file_name,
+                    )
 
-                if file_id not in self.generated_files:
-                    self.generated_files[file_id] = []
+                    args = shlex.split(command)
+                    self.logger.info(
+                        "generating interactive operation for: {}".format(file_name)
+                    )
+                    self.logger.debug(command)
 
-                self.generated_files[file_id].append(output_file)
-            else:
-                self.logger.error('failed to generate the interactive plots (error %s)', s.returncode)
+                    s = subprocess.run(args)
 
-                if s.stdout is not None:
-                    for item in s.stdout.decode().split('\n'):
-                        if item.strip() != '':
-                            self.logger.debug(item)
+                    if s.returncode == 0:
+                        if os.path.exists(output_file):
+                            self.logger.info("SUCCESS: {}".format(output_file))
+                        else:
+                            self.logger.warning("no data to generate interactive plots")
 
-                if s.stderr is not None:
-                    for item in s.stderr.decode().split('\n'):
-                        if item.strip() != '':
-                            self.logger.error(item)
+                        if self.args.browser:
+                            webbrowser.open("file://{}".format(output_file), new=2)
 
-    def generate_transfer_plot(self, file):
+                        if file_id not in self.generated_files:
+                            self.generated_files[file_id] = []
+
+                        self.generated_files[file_id].append(output_file)
+                    else:
+                        self.logger.error(
+                            "failed to generate the interactive plots (error %s)",
+                            s.returncode,
+                        )
+
+                        sys.exit(os.EX_SOFTWARE)
+
+    def generate_transfer_plot(self, file, report):
         """Generate an interactive transfer plot."""
-        limits = ''
+        limits = ""
 
         if self.args.start:
-            limits += ' -s {} '.format(self.args.start)
+            limits += " -s {} ".format(self.args.start)
 
         if self.args.end:
-            limits += ' -e {} '.format(self.args.end)
+            limits += " -e {} ".format(self.args.end)
 
         if self.args.start_rank:
-            limits += ' -n {} '.format(self.args.start_rank)
+            limits += " -n {} ".format(self.args.start_rank)
 
         if self.args.end_rank:
-            limits += ' -m {} '.format(self.args.end_rank)
+            limits += " -m {} ".format(self.args.end_rank)
 
-        file_ids = self.list_files(file, False)
+        file_ids = self.list_files(report)
 
-        # Generated the CSV files for each plot
-        self.subset_dataset(file, file_ids)
+        if len(file_ids) == 0:
+            self.logger.info("No data to generate plots")
+        else:
+            # Generated the CSV files for each plot
 
-        for file_id, file_name in file_ids.items():
-            output_file = '{}/{}-{}.html'.format(self.prefix, file_id, 'transfer')
+            self.subset_dataset(file, file_ids, report)
 
-            path = 'plots/transfer.R'
-            script = pkg_resources.resource_filename(__name__, path)
+            for file_id, file_name in file_ids.items():
+                output_file = "{}/{}-{}.html".format(self.prefix, file_id, "transfer")
 
-            command = '{} -f {}.{}.dxt.csv -o {} -x {}'.format(
-                script,
-                file,
-                file_id,
-                output_file,
-                file_name
-            )
+                path = "plots/transfer.py"
+                script = pkg_resources.resource_filename(__name__, path)
 
-            args = shlex.split(command)
+                command = "python3 {} -f {}.{}.dxt {} -o {} -x {}".format(
+                    script, file, file_id, limits, output_file, file_name
+                )
 
-            self.logger.info('generating interactive transfer for: {}'.format(file_name))
-            self.logger.debug(command)
+                args = shlex.split(command)
 
-            s = subprocess.run(args, stderr=subprocess.PIPE, stdout=subprocess.PIPE)
+                self.logger.info(
+                    "generating interactive transfer for: {}".format(file_name)
+                )
+                self.logger.debug(command)
 
-            if s.returncode == 0:
-                self.logger.info('SUCCESS: {}'.format(output_file))
+                s = subprocess.run(args)
 
-                if self.args.browser:
-                    webbrowser.open('file://{}.{}.transfer.html'.format(file, file_id), new=2)
+                if s.returncode == 0:
+                    self.logger.info("SUCCESS: {}".format(output_file))
 
-                if file_id not in self.generated_files:
-                    self.generated_files[file_id] = []
+                    if self.args.browser:
+                        webbrowser.open(
+                            "file://{}.{}.transfer.html".format(file, file_id), new=2
+                        )
 
-                self.generated_files[file_id].append(output_file)
-            else:
-                self.logger.error('failed to generate the interactive plots (error %s)', s.returncode)
+                    if file_id not in self.generated_files:
+                        self.generated_files[file_id] = []
 
-                if s.stdout is not None:
-                    for item in s.stdout.decode().split('\n'):
-                        if item.strip() != '':
-                            self.logger.debug(item)
-
-                if s.stderr is not None:
-                    for item in s.stderr.decode().split('\n'):
-                        if item.strip() != '':
-                            self.logger.error(item)
-
-    def generate_spatiality_plot(self, file):
-        """Generate an interactive spatiality plot."""
-        file_ids = self.list_files(file, False)
-
-        # Generated the CSV files for each plot
-        self.subset_dataset(file, file_ids)
-
-        for file_id, file_name in file_ids.items():
-            output_file = '{}/{}-{}.html'.format(self.prefix, file_id, 'spatiality')
-
-            path = 'plots/spatiality.R'
-            script = pkg_resources.resource_filename(__name__, path)
-
-            command = '{} -f {}.{}.dxt.csv -o {} -x {}'.format(
-                script,
-                file,
-                file_id,
-                output_file,
-                file_name
-            )
-
-            args = shlex.split(command)
-
-            self.logger.info('generating interactive spatiality for: {}'.format(file_name))
-            self.logger.debug(command)
-
-            s = subprocess.run(args, stderr=subprocess.PIPE, stdout=subprocess.PIPE)
-
-            if s.returncode == 0:
-                if os.path.exists(output_file):
-                    self.logger.info('SUCCESS: {}'.format(output_file))
+                    self.generated_files[file_id].append(output_file)
                 else:
-                    self.logger.warning('no data to generate spatiality plots')
+                    self.logger.error(
+                        "failed to generate the interactive plots (error %s)",
+                        s.returncode,
+                    )
 
-                if self.args.browser:
-                    webbrowser.open('file://{}'.format(output_file), new=2)
+                    sys.exit(os.EX_SOFTWARE)
 
-                if file_id not in self.generated_files:
-                    self.generated_files[file_id] = []
+    def generate_spatiality_plot(self, file, report):
+        """Generate an interactive spatiality plot."""
+        file_ids = self.list_files(report)
+        if len(file_ids) == 0:
+            self.logger.info("No data to generate plots")
+        else:
+            # Generated the CSV files for each plot
+            self.subset_dataset(file, file_ids, report)
 
-                self.generated_files[file_id].append(output_file)
-            else:
-                self.logger.error('failed to generate the spatiality plots (error %s)', s.returncode)
+            for file_id, file_name in file_ids.items():
+                output_file = "{}/{}-{}.html".format(self.prefix, file_id, "spatiality")
 
-                if s.stdout is not None:
-                    for item in s.stdout.decode().split('\n'):
-                        if item.strip() != '':
-                            self.logger.debug(item)
+                path = "plots/spatiality.py"
+                script = pkg_resources.resource_filename(__name__, path)
 
-                if s.stderr is not None:
-                    for item in s.stderr.decode().split('\n'):
-                        if item.strip() != '':
-                            self.logger.error(item)
+                command = "python3 {} -f {}.{}.dxt -o {} -x {}".format(
+                    script, file, file_id, output_file, file_name
+                )
 
-    def generate_index(self, file):
+                args = shlex.split(command)
+                self.logger.info(
+                    "generating interactive spatiality for: {}".format(file_name)
+                )
+
+                s = subprocess.run(args)
+
+                if s.returncode == 0:
+                    if os.path.exists(output_file):
+                        self.logger.info("SUCCESS: {}".format(output_file))
+                    else:
+                        self.logger.warning("no data to generate spatiality plots")
+
+                    if self.args.browser:
+                        webbrowser.open("file://{}".format(output_file), new=2)
+
+                    if file_id not in self.generated_files:
+                        self.generated_files[file_id] = []
+
+                    self.generated_files[file_id].append(output_file)
+                else:
+                    self.logger.error(
+                        "failed to generate the spatiality plots (error %s)",
+                        s.returncode,
+                    )
+
+                    sys.exit(os.EX_SOFTWARE)
+
+    def generate_phase_plot(self, file, report):
+        """Generate an interactive I/O phase plot."""
+        file_ids = self.list_files(report)
+
+        if len(file_ids) == 0:
+            self.logger.info("No data to generate plots")
+        else:
+            self.subset_dataset(file, file_ids, report)
+            self.calculate_io_phases(file, file_ids)
+
+            for file_id, file_name in file_ids.items():
+                output_file = "{}/{}-{}.html".format(self.prefix, file_id, "io_phase")
+                path = "plots/io_phase.py"
+                script = pkg_resources.resource_filename(__name__, path)
+
+                command = "python3 {} -f {}.{}.io_phases -o {} -x {}".format(
+                    script, file, file_id, output_file, file_name
+                )
+
+                args = shlex.split(command)
+                self.logger.info(
+                    "generating interactive I/O phase plot for: {}".format(file_name)
+                )
+
+                s = subprocess.run(args)
+
+                if s.returncode == 0:
+                    if os.path.exists(output_file):
+                        self.logger.info("SUCCESS: {}".format(output_file))
+                    else:
+                        self.logger.warning("no data to generate interactive plots")
+
+                    if self.args.browser:
+                        webbrowser.open("file://{}".format(output_file), new=2)
+
+                    if file_id not in self.generated_files:
+                        self.generated_files[file_id] = []
+
+                    self.generated_files[file_id].append(output_file)
+                else:
+                    self.logger.error(
+                        "failed to generate the interactive plots (error %s)",
+                        s.returncode,
+                    )
+
+                    sys.exit(os.EX_SOFTWARE)
+
+    def generate_ost_usage_operation_plot(self, file, report):
+        """Generate an interactive OST usage operation plot."""
+        file_ids = self.list_files(report)
+
+        if len(file_ids) == 0:
+            self.logger.info("No data to generate plots")
+        else:
+            self.subset_dataset(file, file_ids, report)
+
+            for file_id, file_name in file_ids.items():
+                output_file = "{}/{}-{}.html".format(
+                    self.prefix, file_id, "ost_usage_operation"
+                )
+                path = "plots/ost_usage_operation.py"
+                script = pkg_resources.resource_filename(__name__, path)
+
+                command = "python3 {} -f {}.{}.dxt -o {} -x {}".format(
+                    script, file, file_id, output_file, file_name
+                )
+
+                args = shlex.split(command)
+                self.logger.info(
+                    "generating interactive OST usage operation plot for: {}".format(
+                        file_name
+                    )
+                )
+
+                s = subprocess.run(args)
+
+                if s.returncode == 0:
+                    if os.path.exists(output_file):
+                        self.logger.info("SUCCESS: {}".format(output_file))
+                    else:
+                        self.logger.warning("no data to generate interactive plots")
+
+                    if self.args.browser:
+                        webbrowser.open("file://{}".format(output_file), new=2)
+
+                    if file_id not in self.generated_files:
+                        self.generated_files[file_id] = []
+
+                    self.generated_files[file_id].append(output_file)
+                else:
+                    self.logger.error(
+                        "failed to generate the interactive plots (error %s)",
+                        s.returncode,
+                    )
+
+                    sys.exit(os.EX_SOFTWARE)
+
+    def generate_ost_usage_transfer_plot(self, file, report):
+        """Generate an interactive OST usage data transfer plot."""
+        file_ids = self.list_files(report)
+
+        if len(file_ids) == 0:
+            self.logger.info("No data to generate plots")
+        else:
+            self.subset_dataset(file, file_ids, report)
+
+            for file_id, file_name in file_ids.items():
+                output_file = "{}/{}-{}.html".format(
+                    self.prefix, file_id, "ost_usage_transfer"
+                )
+                path = "plots/ost_usage_transfer.py"
+                script = pkg_resources.resource_filename(__name__, path)
+
+                command = "python3 {} -f {}.{}.dxt -o {} -x {}".format(
+                    script, file, file_id, output_file, file_name
+                )
+
+                args = shlex.split(command)
+                self.logger.info(
+                    "generating interactive OST usage transfer plot for: {}".format(
+                        file_name
+                    )
+                )
+
+                s = subprocess.run(args)
+
+                if s.returncode == 0:
+                    if os.path.exists(output_file):
+                        self.logger.info("SUCCESS: {}".format(output_file))
+                    else:
+                        self.logger.warning("no data to generate interactive plots")
+
+                    if self.args.browser:
+                        webbrowser.open("file://{}".format(output_file), new=2)
+
+                    if file_id not in self.generated_files:
+                        self.generated_files[file_id] = []
+
+                    self.generated_files[file_id].append(output_file)
+                else:
+                    self.logger.error(
+                        "failed to generate the interactive plots (error %s)",
+                        s.returncode,
+                    )
+
+                    sys.exit(os.EX_SOFTWARE)
+
+    def generate_index(self, file, report):
         """Generate index file with all the plots."""
-        file_ids = self.list_files(file, False)
+        file_ids = self.list_files(report, False)
 
-        file = open(os.path.join(self.ROOT, 'plots/index.html'), mode='r')
+        file = open(os.path.join(self.ROOT, "plots/index.html"), mode="r")
         template = file.read()
         file.close()
 
-        file_index = ''
+        file_index = ""
 
         for file_id, file_names in self.generated_files.items():
             plots = []
@@ -530,23 +1109,33 @@ class Explorer:
             for file_name in file_names:
                 plot_type = None
 
-                if 'operation' in file_name:
-                    plot_type = 'OPERATION'
+                if "operation" in file_name:
+                    plot_type = "OPERATION"
 
-                if 'transfer' in file_name:
-                    plot_type = 'TRANSFER'
+                if "transfer" in file_name:
+                    plot_type = "TRANSFER"
 
-                if 'spatiality' in file_name:
-                    plot_type = 'SPATIALITY'
+                if "spatiality" in file_name:
+                    plot_type = "SPATIALITY"
 
-                plots.append("""
+                if "io_phase" in file_name:
+                    plot_type = "IO PHASES"
+
+                if "ost_usage_operation" in file_name:
+                    plot_type = "OST USAGE OPERATION"
+
+                if "ost_usage_transfer" in file_name:
+                    plot_type = "OST USAGE TRANSFER"
+
+                plots.append(
+                    """
                     <li>
                         <a href="{}" target="_blank">{}</a>
                     </li>
                 """.format(
-                    file_name,
-                    plot_type
-                ))
+                        os.path.basename(file_name), plot_type
+                    )
+                )
 
             file_index += """
                 <li>
@@ -556,126 +1145,196 @@ class Explorer:
                     </ul>
                 </li>
             """.format(
-                file_ids[file_id],
-                ''.join(plots)
+                file_ids[file_id], "".join(plots)
             )
 
         self.explorer_end_time = time.time()
 
-        template = template.replace('DXT_DARSHAN_FILE', self.args.darshan)
-        template = template.replace('DXT_EXPLORER_FILES', file_index)
-        template = template.replace('DXT_EXPLORER_VERSION', version.__version__)
-        template = template.replace('DXT_EXPLORER_DATE', str(datetime.datetime.now()))
-        template = template.replace('DXT_EXPLORER_RUNTIME', '{:03f}'.format(self.explorer_end_time - self.explorer_start_time))
+        template = template.replace("DXT_DARSHAN_FILE", self.args.darshan)
+        template = template.replace("DXT_EXPLORER_FILES", file_index)
+        template = template.replace("DXT_EXPLORER_VERSION", dxt_version.__version__)
+        template = template.replace("DXT_EXPLORER_DATE", str(datetime.datetime.now()))
+        template = template.replace(
+            "DXT_EXPLORER_RUNTIME",
+            "{:03f}".format(self.explorer_end_time - self.explorer_start_time),
+        )
 
-        output_file = '{}/{}.html'.format(self.prefix, 'index')
+        output_file = "{}/{}.html".format(self.prefix, "index")
 
-        file = open(output_file, mode='w')
+        file = open(output_file, mode="w")
         file.write(template)
         file.close()
 
-        self.logger.info('SUCCESS: {}'.format(output_file))
-        self.logger.info('You can open the index.html file in your browser to interactively explore all plots')
+        self.logger.info("SUCCESS: {}".format(output_file))
+        self.logger.info(
+            "You can open the index.html file in your browser to interactively explore all plots"
+        )
+
+    def check_log_version(self, file, log_version, library_version):
+        use_file = file
+        if version.parse(log_version) < version.parse(library_version):
+            use_file = file.replace(".darshan", ".converted.darshan")
+            self.logger.info(
+                'Converting .darshan log from {} to {}: format: saving output file "{}" in the current working directory.'.format(
+                    log_version, library_version, use_file
+                )
+            )
+
+            if not os.path.isfile(use_file):
+                ret = os.system("darshan-convert {} {}".format(file, use_file))
+
+                if ret != 0:
+                    self.logger.error(
+                        "Unable to convert .darshan file to version {}".format(
+                            library_version
+                        )
+                    )
+
+        return use_file
 
 
 def main():
-    PARSER = argparse.ArgumentParser(
-        description='DXT Explorer: '
-    )
+    PARSER = argparse.ArgumentParser(description="DXT Explorer: ")
+
+    PARSER.add_argument("darshan", help="Input .darshan file")
 
     PARSER.add_argument(
-        'darshan',
-        help='Input .darshan file'
-    )
-
-    PARSER.add_argument(
-        '-o',
-        '--output',
+        "-o",
+        "--output",
         default=sys.stdout,
-        type=argparse.FileType('w'),
-        help='Output directory'
+        type=argparse.FileType("w"),
+        help="Output directory",
     )
 
-    PARSER.add_argument(
-        '-p',
-        '--prefix',
-        default=None,
-        help='Output directory'
-    )
+    PARSER.add_argument("-p", "--prefix", default=None, help="Output directory")
 
     PARSER.add_argument(
-        '-t',
-        '--transfer',
+        "-t",
+        "--transfer",
         default=False,
-        action='store_true',
-        help='Generate an interactive data transfer explorer'
+        action="store_true",
+        help="Generate an interactive data transfer explorer",
     )
 
     PARSER.add_argument(
-        '-s',
-        '--spatiality',
+        "-s",
+        "--spatiality",
         default=False,
-        action='store_true',
-        help='Generate an interactive spatiality explorer'
+        action="store_true",
+        help="Generate an interactive spatiality explorer",
     )
 
     PARSER.add_argument(
-        '-d',
-        '--debug',
-        action='store_true',
-        dest='debug',
-        help='Enable debug mode'
-    )
-
-    PARSER.add_argument(
-        '-l',
-        '--list',
-        action='store_true',
-        dest='list_files',
-        help='List all the files with trace'
-    )
-
-    PARSER.add_argument(
-        '--start',
-        action='store',
-        dest='start',
-        help='Report starts from X seconds (e.g., 3.7) from beginning of the job'
-    )
-
-    PARSER.add_argument(
-        '--end',
-        action='store',
-        dest='end',
-        help='Report ends at X seconds (e.g., 3.9) from beginning of the job'
-    )
-
-    PARSER.add_argument(
-        '--from',
-        action='store',
-        dest='start_rank',
-        help='Report start from rank N'
-    )
-
-    PARSER.add_argument(
-        '--to',
-        action='store',
-        dest='end_rank',
-        help='Report up to rank M'
-    )
-
-    PARSER.add_argument(
-        '--browser',
+        "-i",
+        "--io_phase",
         default=False,
-        action='store_true',
-        dest='browser',
-        help='Open the browser with the generated plot'
+        action="store_true",
+        help="Generate an interactive I/O phase explorer",
     )
 
     PARSER.add_argument(
-        '-v',
-        '--version',
-        action='version',
-        version='%(prog)s ' + version.__version__ + ' (' + version.__release_date__ + ')'
+        "-oo",
+        "--ost_usage_operation",
+        default=False,
+        action="store_true",
+        help="Generate an interactive OST usage operation explorer",
+    )
+
+    PARSER.add_argument(
+        "-ot",
+        "--ost_usage_transfer",
+        default=False,
+        action="store_true",
+        help="Generate an interactive OST usage data transfer size explorer",
+    )
+
+    PARSER.add_argument(
+        "-r",
+        "--rank_zero_workload",
+        default=False,
+        action="store_true",
+        dest="rank_zero_workload",
+        help="Determine if rank 0 is doing more I/O than the rest of the workload",
+    )
+
+    PARSER.add_argument(
+        "-u",
+        "--unbalanced_workload",
+        default=False,
+        action="store_true",
+        dest="unbalanced_workload",
+        help="Determine which ranks have unbalanced workload",
+    )
+
+    PARSER.add_argument(
+        "-st",
+        "--stragglers",
+        default=False,
+        action="store_true",
+        dest="stragglers",
+        help="Determine the 5 percent slowest operations in the time distribution",
+    )
+
+    PARSER.add_argument(
+        "-d", "--debug", action="store_true", dest="debug", help="Enable debug mode"
+    )
+
+    PARSER.add_argument(
+        "-l",
+        "--list",
+        action="store_true",
+        dest="list_files",
+        help="List all the files with trace",
+    )
+
+    PARSER.add_argument(
+        "--start",
+        action="store",
+        dest="start",
+        help="Report starts from X seconds (e.g., 3.7) from beginning of the job",
+    )
+
+    PARSER.add_argument(
+        "--end",
+        action="store",
+        dest="end",
+        help="Report ends at X seconds (e.g., 3.9) from beginning of the job",
+    )
+
+    PARSER.add_argument(
+        "--from", action="store", dest="start_rank", help="Report start from rank N"
+    )
+
+    PARSER.add_argument(
+        "--to", action="store", dest="end_rank", help="Report up to rank M"
+    )
+
+    PARSER.add_argument(
+        "--browser",
+        default=False,
+        action="store_true",
+        dest="browser",
+        help="Open the browser with the generated plot",
+    )
+
+    PARSER.add_argument(
+        "-csv",
+        "--csv",
+        default=False,
+        action="store_true",
+        dest="csv",
+        help="Save the parsed DXT trace data into a csv",
+    )
+
+    PARSER.add_argument(
+        "-v",
+        "--version",
+        action="version",
+        version="%(prog)s "
+        + dxt_version.__version__
+        + " ("
+        + dxt_version.__release_date__
+        + ")",
     )
 
     ARGS = PARSER.parse_args()
@@ -684,5 +1343,5 @@ def main():
     EXPLORE.run()
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()
