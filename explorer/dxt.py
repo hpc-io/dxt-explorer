@@ -36,9 +36,12 @@ import logging.handlers
 import pyarrow.feather as feather
 # import darshan.backend.cffi_backend as darshanll
 
+from recorder_utils import RecorderReader
+from recorder_utils.build_offset_intervals import build_offset_intervals
 from explorer import version as dxt_version
-from packaging import version
 
+LOG_TYPE_DARSHAN = 0
+LOG_TYPE_RECORDER = 1
 
 class Explorer:
     def __init__(self, args):
@@ -73,82 +76,81 @@ class Explorer:
     def run(self):
         self.explorer_start_time = time.time()
 
-        self.is_darshan_file(self.args.darshan)
+        log_type = self.check_log_type(self.args.log_path)
 
         if not self.args.prefix:
             self.prefix = os.getcwd()
         else:
             self.prefix = self.args.prefix
 
-        # log = darshanll.log_open(self.args.darshan)
-        # information = darshanll.log_get_job(log)
-
-        # log_version = information["metadata"]["lib_ver"]
-        # library_version = darshanll.darshan.backend.cffi_backend.get_lib_version()
-        filename = self.args.darshan
-        # filename = self.check_log_version(
-        #     self.args.darshan, log_version, library_version
-        # )
-        report = darshan.DarshanReport(filename, read_all=True)
-        if "DXT_POSIX" not in report.records and "DXT_MPIIO" not in report.records:
-            self.logger.info("No DXT trace data found in file: {}".format(filename))
-            exit()
+        report = None
+        filename = self.args.log_path
+        if log_type == LOG_TYPE_DARSHAN:
+            # log = darshanll.log_open(self.args.log_path)
+            # information = darshanll.log_get_job(log)
+            # log_version = information["metadata"]["lib_ver"]
+            # library_version = darshanll.darshan.backend.cffi_backend.get_lib_version()
+            # filename = self.check_log_version(
+            #     self.args.log_path, log_version, library_version
+            # )
+            report = darshan.DarshanReport(filename, read_all=True)
+            if "DXT_POSIX" not in report.records and "DXT_MPIIO" not in report.records:
+                self.logger.info("No DXT trace data found in file: {}".format(filename))
+                exit()
+        elif log_type == LOG_TYPE_RECORDER:
+            report = RecorderReader(filename)
 
         if self.args.list_files:
-            self.list_files(report)
+            self.list_files(report, log_type)
             exit()
 
-        self.generate_plot(filename, report)
+        self.generate_plot(filename, report, log_type)
 
         if self.args.transfer:
-            self.generate_transfer_plot(filename, report)
+            self.generate_transfer_plot(filename, report, log_type)
 
         if self.args.spatiality:
-            self.generate_spatiality_plot(filename, report)
+            self.generate_spatiality_plot(filename, report, log_type)
 
         if self.args.io_phase:
-            self.generate_phase_plot(filename, report)
+            self.generate_phase_plot(filename, report, log_type)
 
         if self.args.ost_usage_operation:
-            self.generate_ost_usage_operation_plot(filename, report)
+            self.generate_ost_usage_operation_plot(filename, report, log_type)
 
         if self.args.ost_usage_transfer:
-            self.generate_ost_usage_transfer_plot(filename, report)
+            self.generate_ost_usage_transfer_plot(filename, report, log_type)
 
-        self.generate_index(filename, report)
+        self.generate_index(filename, report, log_type)
 
-    def get_directory(self):
-        """Determine the install path to find the execution scripts."""
-        try:
-            root = __file__
-            if os.path.islink(root):
-                root = os.path.realpath(root)
+    def check_log_type(self, path):
+        if path.endswith(".darshan"):
+            if not os.path.isfile(path):
+                self.logger.error('Unable to open .darshan file.')
+                sys.exit(os.EX_NOINPUT)
+            else: return LOG_TYPE_DARSHAN
+        else: # check whether is a valid recorder log
+            if not os.path.isdir(path):
+                self.logger.error('Unable to open recorder folder.')
+                sys.exit(os.EX_NOINPUT)
+            else: return LOG_TYPE_RECORDER
 
-            return os.path.dirname(os.path.abspath(root))
-        except Exception:
-            return None
-
-    def is_darshan_file(self, file):
-        """Check if the provided file exists and is a .darshan file."""
-        if not os.path.exists(self.args.darshan):
-            self.logger.error("{}: NOT FOUND".format(file))
-
-            exit(-1)
-
-        if not self.args.darshan.endswith(".darshan"):
-            self.logger.error("{} is not a .darshan file".format(file))
-
-            exit(-1)
-
-    def list_files(self, report, display=True):
-        """Create a dictionary of file id as key and file name as value."""
+    def list_files(self, report, log_type, display=True):
         total = 0
-        file_ids = report.log["name_records"]
-        for key, value in dict(file_ids).items():
-            if value == "<STDOUT>":
-                del file_ids[key]
-            if value == "<STDERR>":
-                del file_ids[key]
+        file_ids = {}
+        if log_type == LOG_TYPE_DARSHAN:
+            """Create a dictionary of file id as key and file name as value."""
+            file_ids = report.log["name_records"]
+            for key, value in dict(file_ids).items():
+                if value == "<STDOUT>":
+                    del file_ids[key]
+                if value == "<STDERR>":
+                    del file_ids[key]
+
+        elif log_type == LOG_TYPE_RECORDER:
+            ranks = report.GM.total_ranks
+            for rank in range(ranks):
+                file_ids.update(report.LMs[rank].filemap)
 
         for file_id, file_name in file_ids.items():
             total += 1
@@ -156,11 +158,13 @@ class Explorer:
                 self.logger.info("FILE: {} (ID {})".format(file_name, file_id))
 
         if total == 0:
-            self.logger.critical("No DXT records found in {}".format(self.args.darshan))
-            self.logger.critical(
-                "To enable Darshan DXT, set this before your application runs:"
-            )
-            self.logger.critical("$ export DXT_ENABLE_IO_TRACE=1")
+            self.logger.critical("No DXT records found in {}".format(self.args.log_path))
+
+            if log_type == LOG_TYPE_DARSHAN:
+                self.logger.critical(
+                    "To enable Darshan DXT, set this before your application runs:"
+                )
+                self.logger.critical("$ export DXT_ENABLE_IO_TRACE=1")
 
             exit()
 
@@ -253,7 +257,7 @@ class Explorer:
         return rec
 
     def create_dataframe(
-        self, file_id, subset_dataset_file, df_posix=None, df_mpiio=None
+        self, file_id, subset_dataset_file, log_type, df_posix=None, df_mpiio=None
     ):
         """Create a dataframe from parsed records."""
 
@@ -273,68 +277,80 @@ class Explorer:
         runtime = 0
 
         df = []
-
-        if not df_posix.empty:
-            df_posix_temp = df_posix.loc[df_posix["id"] == file_id]
-            for index, row in df_posix_temp.iterrows():
-                write_segments = row["write_segments"]
-                write_segments["operation"] = "write"
-                read_segments = row["read_segments"]
-                read_segments["operation"] = "read"
-
-                temp_result = pd.concat([write_segments, read_segments])
-                temp_result["file_id"] = file_id
-                temp_result["rank"] = row["rank"]
-                temp_result["api"] = "POSIX"
-
-                temp_result = temp_result.rename(
-                    columns={"length": "size", "start_time": "start", "end_time": "end"}
-                )
-
-                total_logs = total_logs + len(temp_result)
-                runtime = max(runtime, temp_result["end"].max())
-
-                temp_result["start"] = temp_result["start"].round(decimals=4)
-                temp_result["end"] = temp_result["end"].round(decimals=4)
-
-                temp_result.index.name = "segment"
-                temp_result.reset_index(inplace=True)
-                temp_result = temp_result.reindex(columns=column_names)
-
-                df.append(temp_result)
-
-        if not df_mpiio.empty:
-            df_mpiio_temp = df_mpiio.loc[df_mpiio["id"] == file_id]
-            for index, row in df_mpiio_temp.iterrows():
-                write_segments = row["write_segments"]
-                write_segments["operation"] = "write"
-                read_segments = row["read_segments"]
-                read_segments["operation"] = "read"
-
-                temp_result = pd.concat([write_segments, read_segments])
-                temp_result["file_id"] = file_id
-                temp_result["rank"] = row["rank"]
-                temp_result["api"] = "MPIIO"
-
-                temp_result = temp_result.rename(
-                    columns={"length": "size", "start_time": "start", "end_time": "end"}
-                )
-
-                total_logs = total_logs + len(temp_result)
-                runtime = max(runtime, temp_result["end"].max())
-
-                temp_result["start"] = temp_result["start"].round(decimals=4)
-                temp_result["end"] = temp_result["end"].round(decimals=4)
-
-                temp_result.index.name = "segment"
-                temp_result.reset_index(inplace=True)
-                temp_result = temp_result.reindex(columns=column_names)
-
-                df.append(temp_result)
-
         result = pd.DataFrame()
-        if df:
-            result = pd.concat(df, axis=0, ignore_index=True)
+
+        if log_type == LOG_TYPE_DARSHAN:
+            if not df_posix.empty:
+                df_posix_temp = df_posix.loc[df_posix["id"] == file_id]
+                for index, row in df_posix_temp.iterrows():
+                    write_segments = row["write_segments"]
+                    write_segments["operation"] = "write"
+                    read_segments = row["read_segments"]
+                    read_segments["operation"] = "read"
+
+                    temp_result = pd.concat([write_segments, read_segments])
+                    temp_result["file_id"] = file_id
+                    temp_result["rank"] = row["rank"]
+                    temp_result["api"] = "POSIX"
+
+                    temp_result = temp_result.rename(
+                        columns={"length": "size", "start_time": "start", "end_time": "end"}
+                    )
+
+                    total_logs = total_logs + len(temp_result)
+                    runtime = max(runtime, temp_result["end"].max())
+
+                    temp_result["start"] = temp_result["start"].round(decimals=4)
+                    temp_result["end"] = temp_result["end"].round(decimals=4)
+
+                    temp_result.index.name = "segment"
+                    temp_result.reset_index(inplace=True)
+                    temp_result = temp_result.reindex(columns=column_names)
+
+                    df.append(temp_result)
+
+            if not df_mpiio.empty:
+                df_mpiio_temp = df_mpiio.loc[df_mpiio["id"] == file_id]
+                for index, row in df_mpiio_temp.iterrows():
+                    write_segments = row["write_segments"]
+                    write_segments["operation"] = "write"
+                    read_segments = row["read_segments"]
+                    read_segments["operation"] = "read"
+
+                    temp_result = pd.concat([write_segments, read_segments])
+                    temp_result["file_id"] = file_id
+                    temp_result["rank"] = row["rank"]
+                    temp_result["api"] = "MPIIO"
+
+                    temp_result = temp_result.rename(
+                        columns={"length": "size", "start_time": "start", "end_time": "end"}
+                    )
+
+                    total_logs = total_logs + len(temp_result)
+                    runtime = max(runtime, temp_result["end"].max())
+
+                    temp_result["start"] = temp_result["start"].round(decimals=4)
+                    temp_result["end"] = temp_result["end"].round(decimals=4)
+
+                    temp_result.index.name = "segment"
+                    temp_result.reset_index(inplace=True)
+                    temp_result = temp_result.reindex(columns=column_names)
+
+                    df.append(temp_result)
+
+            if df:
+                result = pd.concat(df, axis=0, ignore_index=True)
+
+        elif log_type == LOG_TYPE_RECORDER:
+            if not df_posix.empty:
+                df_posix_temp = df_posix.loc[df_posix["file_id"] == file_id]
+            if not df_mpiio.empty:
+                df_mpiio_temp = df_mpiio.loc[df_mpiio["file_id"] == file_id]
+
+            result = pd.concat([df_posix_temp, df_mpiio_temp], ignore_index=True)
+            result = result.reindex(columns=column_names)
+            total_logs = len(result)
+            runtime = result['end'].max()
 
         feather.write_feather(
             result, subset_dataset_file + ".dxt", compression="uncompressed"
@@ -342,8 +358,10 @@ class Explorer:
 
         if self.args.csv:
             result.to_csv(
-                subset_dataset_file + ".dxt.csv", mode="a", index=False, header=True
+                # The original code uses append, not sure if we should change to write here
+                subset_dataset_file + ".dxt.csv", mode="a", index=False, header=True 
             )
+
         column_names = ["total_logs", "runtime"]
         result = pd.DataFrame(columns=column_names)
 
@@ -353,53 +371,73 @@ class Explorer:
             subset_dataset_file + ".summary.dxt.csv", mode="w", index=False, header=True
         )
 
-    def subset_dataset(self, file, file_ids, report):
+    def subset_dataset(self, file, file_ids, report, log_type):
         """Subset the dataset based on file id and save to a csv file."""
         self.logger.info("generating dataframes")
-        lustre_records_by_id = self.get_id_to_record_mapping(report, "LUSTRE")
+        df_posix, df_mpiio = [], []
+        if log_type == LOG_TYPE_DARSHAN:
+            lustre_records_by_id = self.get_id_to_record_mapping(report, "LUSTRE")
 
-        if lustre_records_by_id:
+            if lustre_records_by_id:
 
-            def graceful_wrapper(r, rec, lustre_records_by_id):
-                try:
-                    self.dxt_record_attach_osts_inplace(
-                        report, rec, lustre_records_by_id
+                def graceful_wrapper(r, rec, lustre_records_by_id):
+                    try:
+                        self.dxt_record_attach_osts_inplace(
+                            report, rec, lustre_records_by_id
+                        )
+                    except Exception:
+                        pass
+
+                list(
+                    map(
+                        lambda rec: graceful_wrapper(report, rec, lustre_records_by_id),
+                        report.records["DXT_POSIX"],
                     )
-                except Exception:
-                    pass
-
-            list(
-                map(
-                    lambda rec: graceful_wrapper(report, rec, lustre_records_by_id),
-                    report.records["DXT_POSIX"],
                 )
-            )
-            list(
-                map(
-                    lambda rec: graceful_wrapper(report, rec, lustre_records_by_id),
-                    report.records["DXT_MPIIO"],
+                list(
+                    map(
+                        lambda rec: graceful_wrapper(report, rec, lustre_records_by_id),
+                        report.records["DXT_MPIIO"],
+                    )
                 )
-            )
 
-        df_posix = []
-        if "DXT_POSIX" in report.records:
-            df_posix = report.records["DXT_POSIX"].to_df()
+            if "DXT_POSIX" in report.records:
+                df_posix = report.records["DXT_POSIX"].to_df()
 
-        df_mpiio = []
-        if "DXT_MPIIO" in report.records:
-            df_mpiio = report.records["DXT_MPIIO"].to_df()
+            if "DXT_MPIIO" in report.records:
+                df_mpiio = report.records["DXT_MPIIO"].to_df()
 
-        df_posix = pd.DataFrame(df_posix)
-        df_mpiio = pd.DataFrame(df_mpiio)
+            df_posix = pd.DataFrame(df_posix)
+            df_mpiio = pd.DataFrame(df_mpiio)
+
+        elif log_type == LOG_TYPE_RECORDER:
+            def add_api(row):
+                if 'MPI' in row['function']:
+                    return 'MPIIO'
+                elif 'H5' in row['function']:
+                    return 'H5F'
+                else:
+                    return 'POSIX'
+                
+            def add_operation(row):
+                if 'read' in row['function']:
+                    return 'read'
+                else: return 'write'
+            
+            df_intervals = build_offset_intervals(report)
+            df_intervals['api'] = df_intervals.apply(add_api, axis=1)
+            df_intervals['operation'] = df_intervals.apply(add_operation, axis=1)
+            df_posix = df_intervals[(df_intervals['api'] == 'POSIX')]
+            df_mpiio = df_intervals[(df_intervals['api'] == 'MPIIO')]
 
         for file_id in file_ids:
             subset_dataset_file = "{}.{}".format(file, file_id)
 
             if os.path.exists(subset_dataset_file + ".dxt"):
-                self.logger.debug("using existing parsed Darshan file")
+                self.logger.debug("using existing parsed log file")
                 continue
 
-            self.create_dataframe(file_id, subset_dataset_file, df_posix, df_mpiio)
+            self.create_dataframe(file_id, subset_dataset_file, log_type, df_posix, df_mpiio)
 
     def merge_overlapping_io_phases(self, overlapping_df, df, module):
         io_phases_df = pd.DataFrame(
@@ -626,7 +664,7 @@ class Explorer:
                         result = pd.DataFrame()
                         feather.write_feather(result, phases_file)
 
-    def generate_plot(self, file, report):
+    def generate_plot(self, file, report, log_type):
         """Generate an interactive operation plot."""
         limits = ""
         insights = ""
@@ -649,12 +687,12 @@ class Explorer:
         if self.args.unbalanced_workload:
             insights += " -1 {} ".format(self.args.unbalanced_workload)
 
-        file_ids = self.list_files(report)
+        file_ids = self.list_files(report, log_type)
 
         if len(file_ids) == 0:
             self.logger.info("No data to generate plots")
         else:
-            self.subset_dataset(file, file_ids, report)
+            self.subset_dataset(file, file_ids, report, log_type)
 
             if self.args.stragglers:
                 insights += " -2 {} ".format(self.args.stragglers)
@@ -835,7 +873,7 @@ class Explorer:
 
                         sys.exit(os.EX_SOFTWARE)
 
-    def generate_transfer_plot(self, file, report):
+    def generate_transfer_plot(self, file, report, log_type):
         """Generate an interactive transfer plot."""
         limits = ""
 
@@ -851,14 +889,14 @@ class Explorer:
         if self.args.end_rank:
             limits += " -m {} ".format(self.args.end_rank)
 
-        file_ids = self.list_files(report)
+        file_ids = self.list_files(report, log_type)
 
         if len(file_ids) == 0:
             self.logger.info("No data to generate plots")
         else:
             # Generated the CSV files for each plot
 
-            self.subset_dataset(file, file_ids, report)
+            self.subset_dataset(file, file_ids, report, log_type)
 
             for file_id, file_name in file_ids.items():
                 output_file = "{}/{}-{}.html".format(self.prefix, file_id, "transfer")
@@ -899,14 +937,14 @@ class Explorer:
 
                     sys.exit(os.EX_SOFTWARE)
 
-    def generate_spatiality_plot(self, file, report):
+    def generate_spatiality_plot(self, file, report, log_type):
         """Generate an interactive spatiality plot."""
-        file_ids = self.list_files(report)
+        file_ids = self.list_files(report, log_type)
         if len(file_ids) == 0:
             self.logger.info("No data to generate plots")
         else:
             # Generated the CSV files for each plot
-            self.subset_dataset(file, file_ids, report)
+            self.subset_dataset(file, file_ids, report, log_type)
 
             for file_id, file_name in file_ids.items():
                 output_file = "{}/{}-{}.html".format(self.prefix, file_id, "spatiality")
@@ -946,14 +984,14 @@ class Explorer:
 
                     sys.exit(os.EX_SOFTWARE)
 
-    def generate_phase_plot(self, file, report):
+    def generate_phase_plot(self, file, report, log_type):
         """Generate an interactive I/O phase plot."""
-        file_ids = self.list_files(report)
+        file_ids = self.list_files(report, log_type)
 
         if len(file_ids) == 0:
             self.logger.info("No data to generate plots")
         else:
-            self.subset_dataset(file, file_ids, report)
+            self.subset_dataset(file, file_ids, report, log_type)
             self.calculate_io_phases(file, file_ids)
 
             for file_id, file_name in file_ids.items():
@@ -993,14 +1031,14 @@ class Explorer:
 
                     sys.exit(os.EX_SOFTWARE)
 
-    def generate_ost_usage_operation_plot(self, file, report):
+    def generate_ost_usage_operation_plot(self, file, report, log_type):
         """Generate an interactive OST usage operation plot."""
-        file_ids = self.list_files(report)
+        file_ids = self.list_files(report, log_type)
 
         if len(file_ids) == 0:
             self.logger.info("No data to generate plots")
         else:
-            self.subset_dataset(file, file_ids, report)
+            self.subset_dataset(file, file_ids, report, log_type)
 
             for file_id, file_name in file_ids.items():
                 output_file = "{}/{}-{}.html".format(
@@ -1043,14 +1081,14 @@ class Explorer:
 
                     sys.exit(os.EX_SOFTWARE)
 
-    def generate_ost_usage_transfer_plot(self, file, report):
+    def generate_ost_usage_transfer_plot(self, file, report, log_type):
         """Generate an interactive OST usage data transfer plot."""
-        file_ids = self.list_files(report)
+        file_ids = self.list_files(report, log_type)
 
         if len(file_ids) == 0:
             self.logger.info("No data to generate plots")
         else:
-            self.subset_dataset(file, file_ids, report)
+            self.subset_dataset(file, file_ids, report, log_type)
 
             for file_id, file_name in file_ids.items():
                 output_file = "{}/{}-{}.html".format(
@@ -1093,9 +1131,9 @@ class Explorer:
 
                     sys.exit(os.EX_SOFTWARE)
 
-    def generate_index(self, file, report):
+    def generate_index(self, file, report, log_type):
         """Generate index file with all the plots."""
-        file_ids = self.list_files(report, False)
+        file_ids = self.list_files(report, log_type, False)
 
         file = open(os.path.join(self.ROOT, "plots/index.html"), mode="r")
         template = file.read()
@@ -1150,7 +1188,7 @@ class Explorer:
 
         self.explorer_end_time = time.time()
 
-        template = template.replace("DXT_DARSHAN_FILE", self.args.darshan)
+        template = template.replace("DXT_DARSHAN_FILE", self.args.log_path)
         template = template.replace("DXT_EXPLORER_FILES", file_index)
         template = template.replace("DXT_EXPLORER_VERSION", dxt_version.__version__)
         template = template.replace("DXT_EXPLORER_DATE", str(datetime.datetime.now()))
@@ -1170,33 +1208,10 @@ class Explorer:
             "You can open the index.html file in your browser to interactively explore all plots"
         )
 
-    def check_log_version(self, file, log_version, library_version):
-        use_file = file
-        if version.parse(log_version) < version.parse(library_version):
-            use_file = file.replace(".darshan", ".converted.darshan")
-            self.logger.info(
-                'Converting .darshan log from {} to {}: format: saving output file "{}" in the current working directory.'.format(
-                    log_version, library_version, use_file
-                )
-            )
-
-            if not os.path.isfile(use_file):
-                ret = os.system("darshan-convert {} {}".format(file, use_file))
-
-                if ret != 0:
-                    self.logger.error(
-                        "Unable to convert .darshan file to version {}".format(
-                            library_version
-                        )
-                    )
-
-        return use_file
-
-
 def main():
     PARSER = argparse.ArgumentParser(description="DXT Explorer: ")
 
-    PARSER.add_argument("darshan", help="Input .darshan file")
+    PARSER.add_argument("log_path", help="Input .darshan file or recorder folder")
 
     PARSER.add_argument(
         "-o",
@@ -1341,7 +1356,6 @@ def main():
 
     EXPLORE = Explorer(ARGS)
     EXPLORE.run()
-
-
+ 
 if __name__ == "__main__":
     main()

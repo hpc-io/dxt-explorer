@@ -882,10 +882,13 @@ if any_bottleneck:
 else:
     size = 176
 
-file = options["file1"].split(".darshan")[0]
-command = "drishti --html --light --size {} --json {} {}.darshan".format(
-    size, json_file_path, file
-)
+if ".darshan" in options["file1"]:
+    file = options["file1"].split(".darshan")[0] + ".darshan"
+else: # case Recorder
+    file = options["file1"].split(".")[0]
+    
+command = "drishti --html --light --size {} --json {} {}".format(size, json_file_path, file)
+
 args = shlex.split(command)
 s = subprocess.Popen(args, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
 sOutput, sError = s.communicate()
@@ -901,10 +904,10 @@ if s.returncode == 0:
     with open(options["output"], "r") as html_file:
         output_doc.body.extend(BeautifulSoup(html_file.read(), "html.parser").body)
 
-    with open(file + ".darshan.html", "r") as html_file:
+    with open(file + ".html", "r") as html_file:
         output_doc.head.extend(BeautifulSoup(html_file.read(), "html.parser").head)
 
-    with open(file + ".darshan.html", "r") as html_file:
+    with open(file + ".html", "r") as html_file:
         output_doc.body.extend(BeautifulSoup(html_file.read(), "html.parser").body)
 
     output_doc.style.append(BeautifulSoup("pre { padding-left: 60px;}", "html.parser"))
