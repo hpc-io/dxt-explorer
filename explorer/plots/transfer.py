@@ -65,6 +65,8 @@ parser.add_option(
 options = vars(options)
 
 df = feather.read_feather(options["file"])
+if df.empty:
+    quit()
 
 df["duration"] = df["end"] - df["start"]
 

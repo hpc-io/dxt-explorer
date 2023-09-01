@@ -114,6 +114,15 @@ def determine_legend(fig, column):
 
 parser = OptionParser()
 parser.add_option(
+    "-p",
+    "--file0",
+    type="string",
+    default=None,
+    help="Traces path",
+    metavar="FILE",
+)
+
+parser.add_option(
     "-f",
     "--file1",
     type="string",
@@ -882,10 +891,7 @@ if any_bottleneck:
 else:
     size = 176
 
-if ".darshan" in options["file1"]:
-    file = options["file1"].split(".darshan")[0] + ".darshan"
-else: # case Recorder
-    file = options["file1"].split(".")[0]
+file = options["file0"]
     
 command = "drishti --html --light --size {} --json {} {}".format(size, json_file_path, file)
 

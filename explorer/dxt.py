@@ -347,10 +347,11 @@ class Explorer:
             if not df_mpiio.empty:
                 df_mpiio_temp = df_mpiio.loc[df_mpiio["file_id"] == file_id]
 
-            result = pd.concat([df_posix_temp, df_mpiio_temp], ignore_index=True)
-            result = result.reindex(columns=column_names)
-            total_logs = len(result)
-            runtime = result['end'].max()
+            if not df_posix_temp.empty or not df_mpiio_temp.empty:
+                result = pd.concat([df_posix_temp, df_mpiio_temp], ignore_index=True)
+                result = result.reindex(columns=column_names)
+                total_logs = len(result)
+                runtime = result['end'].max()
 
         feather.write_feather(
             result, subset_dataset_file + ".dxt", compression="uncompressed"
@@ -358,8 +359,7 @@ class Explorer:
 
         if self.args.csv:
             result.to_csv(
-                # The original code uses append, not sure if we should change to write here
-                subset_dataset_file + ".dxt.csv", mode="a", index=False, header=True 
+                subset_dataset_file + ".dxt.csv", mode="w", index=False, header=True 
             )
 
         column_names = ["total_logs", "runtime"]
@@ -770,8 +770,9 @@ class Explorer:
                             path = "plots/operation.py"
                             script = pkg_resources.resource_filename(__name__, path)
 
-                            command = "python3 {} -f {}.{}.{}-{}.dxt -i {}.{}.{}-{}.io_phases {} {} -o {} -x {} -t {} -r {}".format(
+                            command = "python3 {} -p {} -f {}.{}.{}-{}.dxt -i {}.{}.{}-{}.io_phases {} {} -o {} -x {} -t {} -r {}".format(
                                 script,
+                                file,
                                 file,
                                 file_id,
                                 "snapshot",
@@ -798,17 +799,20 @@ class Explorer:
                             s = subprocess.run(args)
 
                             if s.returncode == 0:
+                                if file_id not in self.generated_files:
+                                    self.generated_files[file_id] = []
+
                                 if os.path.exists(output_file):
                                     self.logger.info("SUCCESS: {}".format(output_file))
-                                else:
-                                    self.logger.warning(
-                                        "no data to generate interactive plots"
-                                    )
 
-                                if self.args.browser:
-                                    webbrowser.open(
-                                        "file://{}".format(output_file), new=2
-                                    )
+                                    if self.args.browser:
+                                        webbrowser.open("file://{}".format(output_file), new=2)
+
+                                    self.generated_files[file_id].append(output_file)
+
+                                else:
+                                    self.logger.warning("no data to generate interactive plots")
+
                             else:
                                 self.logger.error(
                                     "failed to generate the interactive plots (error %s)",
@@ -832,8 +836,9 @@ class Explorer:
                     path = "plots/operation.py"
                     script = pkg_resources.resource_filename(__name__, path)
 
-                    command = "python3 {} -f {}.{}.dxt -i {}.{}.io_phases{} {} -o {} -x {}".format(
+                    command = "python3 {} -p {} -f {}.{}.dxt -i {}.{}.io_phases{} {} -o {} -x {}".format(
                         script,
+                        file,
                         file,
                         file_id,
                         file,
@@ -853,18 +858,20 @@ class Explorer:
                     s = subprocess.run(args)
 
                     if s.returncode == 0:
-                        if os.path.exists(output_file):
-                            self.logger.info("SUCCESS: {}".format(output_file))
-                        else:
-                            self.logger.warning("no data to generate interactive plots")
-
-                        if self.args.browser:
-                            webbrowser.open("file://{}".format(output_file), new=2)
-
                         if file_id not in self.generated_files:
                             self.generated_files[file_id] = []
 
-                        self.generated_files[file_id].append(output_file)
+                        if os.path.exists(output_file):
+                            self.logger.info("SUCCESS: {}".format(output_file))
+
+                            if self.args.browser:
+                                webbrowser.open("file://{}".format(output_file), new=2)
+
+                            self.generated_files[file_id].append(output_file)
+
+                        else:
+                            self.logger.warning("no data to generate interactive plots")
+
                     else:
                         self.logger.error(
                             "failed to generate the interactive plots (error %s)",
@@ -918,20 +925,23 @@ class Explorer:
                 s = subprocess.run(args)
 
                 if s.returncode == 0:
-                    self.logger.info("SUCCESS: {}".format(output_file))
-
-                    if self.args.browser:
-                        webbrowser.open(
-                            "file://{}.{}.transfer.html".format(file, file_id), new=2
-                        )
-
                     if file_id not in self.generated_files:
                         self.generated_files[file_id] = []
 
-                    self.generated_files[file_id].append(output_file)
+                    if os.path.exists(output_file):
+                        self.logger.info("SUCCESS: {}".format(output_file))
+
+                        if self.args.browser:
+                            webbrowser.open("file://{}".format(output_file), new=2)
+
+                        self.generated_files[file_id].append(output_file)
+
+                    else:
+                        self.logger.warning("no data to generate transfer plots")
+
                 else:
                     self.logger.error(
-                        "failed to generate the interactive plots (error %s)",
+                        "failed to generate the transfer plots (error %s)",
                         s.returncode,
                     )
 
@@ -964,18 +974,20 @@ class Explorer:
                 s = subprocess.run(args)
 
                 if s.returncode == 0:
-                    if os.path.exists(output_file):
-                        self.logger.info("SUCCESS: {}".format(output_file))
-                    else:
-                        self.logger.warning("no data to generate spatiality plots")
-
-                    if self.args.browser:
-                        webbrowser.open("file://{}".format(output_file), new=2)
-
                     if file_id not in self.generated_files:
                         self.generated_files[file_id] = []
 
-                    self.generated_files[file_id].append(output_file)
+                    if os.path.exists(output_file):
+                        self.logger.info("SUCCESS: {}".format(output_file))
+
+                        if self.args.browser:
+                            webbrowser.open("file://{}".format(output_file), new=2)
+
+                        self.generated_files[file_id].append(output_file)
+
+                    else:
+                        self.logger.warning("no data to generate spatiality plots")
+
                 else:
                     self.logger.error(
                         "failed to generate the spatiality plots (error %s)",
@@ -1011,21 +1023,23 @@ class Explorer:
                 s = subprocess.run(args)
 
                 if s.returncode == 0:
-                    if os.path.exists(output_file):
-                        self.logger.info("SUCCESS: {}".format(output_file))
-                    else:
-                        self.logger.warning("no data to generate interactive plots")
-
-                    if self.args.browser:
-                        webbrowser.open("file://{}".format(output_file), new=2)
-
                     if file_id not in self.generated_files:
                         self.generated_files[file_id] = []
 
-                    self.generated_files[file_id].append(output_file)
+                    if os.path.exists(output_file):
+                        self.logger.info("SUCCESS: {}".format(output_file))
+
+                        if self.args.browser:
+                            webbrowser.open("file://{}".format(output_file), new=2)
+
+                        self.generated_files[file_id].append(output_file)
+
+                    else:
+                        self.logger.warning("no data to generate I/O phase plots")
+                    
                 else:
                     self.logger.error(
-                        "failed to generate the interactive plots (error %s)",
+                        "failed to generate I/O phase plots (error %s)",
                         s.returncode,
                     )
 
@@ -1061,21 +1075,23 @@ class Explorer:
                 s = subprocess.run(args)
 
                 if s.returncode == 0:
-                    if os.path.exists(output_file):
-                        self.logger.info("SUCCESS: {}".format(output_file))
-                    else:
-                        self.logger.warning("no data to generate interactive plots")
-
-                    if self.args.browser:
-                        webbrowser.open("file://{}".format(output_file), new=2)
-
                     if file_id not in self.generated_files:
                         self.generated_files[file_id] = []
 
-                    self.generated_files[file_id].append(output_file)
+                    if os.path.exists(output_file):
+                        self.logger.info("SUCCESS: {}".format(output_file))
+
+                        if self.args.browser:
+                            webbrowser.open("file://{}".format(output_file), new=2)
+
+                        self.generated_files[file_id].append(output_file)
+
+                    else:
+                        self.logger.warning("no data to generate interactive OST usage operation plots")
+
                 else:
                     self.logger.error(
-                        "failed to generate the interactive plots (error %s)",
+                        "failed to generate interactive OST usage operation plots (error %s)",
                         s.returncode,
                     )
 
@@ -1111,21 +1127,23 @@ class Explorer:
                 s = subprocess.run(args)
 
                 if s.returncode == 0:
-                    if os.path.exists(output_file):
-                        self.logger.info("SUCCESS: {}".format(output_file))
-                    else:
-                        self.logger.warning("no data to generate interactive plots")
-
-                    if self.args.browser:
-                        webbrowser.open("file://{}".format(output_file), new=2)
-
                     if file_id not in self.generated_files:
                         self.generated_files[file_id] = []
 
-                    self.generated_files[file_id].append(output_file)
+                    if os.path.exists(output_file):
+                        self.logger.info("SUCCESS: {}".format(output_file))
+
+                        if self.args.browser:
+                            webbrowser.open("file://{}".format(output_file), new=2)
+
+                        self.generated_files[file_id].append(output_file)
+
+                    else:
+                        self.logger.warning("no data to generate interactive OST usage transfer plots")
+                    
                 else:
                     self.logger.error(
-                        "failed to generate the interactive plots (error %s)",
+                        "failed to generate interactive OST usage transfer plots (error %s)",
                         s.returncode,
                     )
 
@@ -1188,7 +1206,7 @@ class Explorer:
 
         self.explorer_end_time = time.time()
 
-        template = template.replace("DXT_DARSHAN_FILE", self.args.log_path)
+        template = template.replace("DXT_LOG_PATH", self.args.log_path)
         template = template.replace("DXT_EXPLORER_FILES", file_index)
         template = template.replace("DXT_EXPLORER_VERSION", dxt_version.__version__)
         template = template.replace("DXT_EXPLORER_DATE", str(datetime.datetime.now()))
