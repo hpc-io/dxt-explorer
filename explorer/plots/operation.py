@@ -276,13 +276,14 @@ if not options["graph_type"]:
 else:
     maximum_limit = options["runtime"]
 
-if ("POSIX" in df["api"].unique()) & ("MPIIO" in df["api"].unique()):
-    facet_row = "api"
-    category_orders = {"api": ["MPIIO", "POSIX"]}
-else:
-    facet_row = None
-    category_orders = None
-
+facet_row = "api"
+category_orders = {"api": []}
+if ("H5F" in df["api"].unique()):
+    category_orders["api"].append("H5F")
+if ("MPIIO" in df["api"].unique()):
+    category_orders["api"].append("MPIIO")
+if ("POSIX" in df["api"].unique()):
+    category_orders["api"].append("POSIX")
 
 dxt_issues = []
 
@@ -806,6 +807,8 @@ for annotation in fig.layout.annotations:
         annotation.text = "POSIX"
     elif "MPIIO" in annotation.text:
         annotation.text = "MPIIO"
+    elif "H5F" in annotation.text:
+        annotation.text = "HDF5"
 
 if any_bottleneck:
     fig_annotations = fig.layout.annotations
@@ -892,7 +895,7 @@ else:
     size = 176
 
 file = options["file0"]
-    
+
 command = "drishti --html --light --size {} --json {} {}".format(size, json_file_path, file)
 
 args = shlex.split(command)
