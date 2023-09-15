@@ -257,7 +257,7 @@ class Explorer:
         return rec
 
     def create_dataframe(
-        self, file_id, subset_dataset_file, log_type, df_posix=None, df_mpiio=None
+        self, file_id, subset_dataset_file, log_type, df_posix=None, df_mpiio=None, df_hdf5=None
     ):
         """Create a dataframe from parsed records."""
 
@@ -342,16 +342,25 @@ class Explorer:
                 result = pd.concat(df, axis=0, ignore_index=True)
 
         elif log_type == LOG_TYPE_RECORDER:
+            df_posix_temp, df_mpiio_temp, df_hdf5_temp = pd.DataFrame(), pd.DataFrame(), pd.DataFrame()
+
             if not df_posix.empty:
                 df_posix_temp = df_posix.loc[df_posix["file_id"] == file_id]
             if not df_mpiio.empty:
                 df_mpiio_temp = df_mpiio.loc[df_mpiio["file_id"] == file_id]
+            if not df_hdf5.empty:
+                df_hdf5_temp = df_hdf5.loc[df_hdf5["file_id"] == file_id]
 
-            if not df_posix_temp.empty or not df_mpiio_temp.empty:
-                result = pd.concat([df_posix_temp, df_mpiio_temp], ignore_index=True)
+            if not df_posix_temp.empty or not df_mpiio_temp.empty or not df_hdf5_temp.empty:
+                result = pd.concat([df_posix_temp, df_mpiio_temp, df_hdf5_temp], ignore_index=True)
                 result = result.reindex(columns=column_names)
                 total_logs = len(result)
                 runtime = result['end'].max()
+                # The next 4 lines are added for demo hdf5 in plot
+                if self.args.debug:
+                    df_hdf5_temp = {"api" : "H5F"}
+                    for _ in range(3):
+                        result.loc[len(result.index)] = df_hdf5_temp
 
         feather.write_feather(
             result, subset_dataset_file + ".dxt", compression="uncompressed"
@@ -374,8 +383,8 @@ class Explorer:
     def subset_dataset(self, file, file_ids, report, log_type):
         """Subset the dataset based on file id and save to a csv file."""
         self.logger.info("generating dataframes")
-        df_posix, df_mpiio = [], []
         if log_type == LOG_TYPE_DARSHAN:
+            df_posix, df_mpiio = [], []
             lustre_records_by_id = self.get_id_to_record_mapping(report, "LUSTRE")
 
             if lustre_records_by_id:
@@ -410,6 +419,15 @@ class Explorer:
             df_posix = pd.DataFrame(df_posix)
             df_mpiio = pd.DataFrame(df_mpiio)
 
+            for file_id in file_ids:
+                subset_dataset_file = "{}.{}".format(file, file_id)
+
+                if os.path.exists(subset_dataset_file + ".dxt"):
+                    self.logger.debug("using existing parsed log file")
+                    continue
+
+                self.create_dataframe(file_id, subset_dataset_file, log_type, df_posix, df_mpiio)
+
         elif log_type == LOG_TYPE_RECORDER:
             def add_api(row):
                 if 'MPI' in row['function']:
@@ -429,15 +447,16 @@ class Explorer:
             df_intervals['operation'] = df_intervals.apply(add_operation, axis=1)
             df_posix = df_intervals[(df_intervals['api'] == 'POSIX')]
             df_mpiio = df_intervals[(df_intervals['api'] == 'MPIIO')]
+            df_hdf5 = df_intervals[(df_intervals['api'] == 'H5F')]
 
-        for file_id in file_ids:
-            subset_dataset_file = "{}.{}".format(file, file_id)
+            for file_id in file_ids:
+                subset_dataset_file = "{}.{}".format(file, file_id)
 
-            if os.path.exists(subset_dataset_file + ".dxt"):
-                self.logger.debug("using existing parsed log file")
-                continue
+                if os.path.exists(subset_dataset_file + ".dxt"):
+                    self.logger.debug("using existing parsed log file")
+                    continue
 
-            self.create_dataframe(file_id, subset_dataset_file, log_type, df_posix, df_mpiio)
+                self.create_dataframe(file_id, subset_dataset_file, log_type, df_posix, df_mpiio, df_hdf5)
 
     def merge_overlapping_io_phases(self, overlapping_df, df, module):
         io_phases_df = pd.DataFrame(
@@ -602,7 +621,18 @@ class Explorer:
                         overlapping_MPIIO, df_mpiio, "MPIIO"
                     )
 
-                    frames = [io_phases_df_posix, io_phases_df_mpiio]
+                    df_hdf5 = df[df["api"] == "H5F"]
+                    df_hdf5 = df_hdf5.sort_values("start")
+
+                    overlapping_HDF5 = overlapping[
+                        overlapping["Chromosome"] == "H5F"
+                    ]
+
+                    io_phases_df_hdf5 = self.merge_overlapping_io_phases(
+                        overlapping_HDF5, df_hdf5, "H5F"
+                    )
+
+                    frames = [io_phases_df_posix, io_phases_df_mpiio, io_phases_df_hdf5]
                     result = pd.concat(frames)
                     feather.write_feather(result, phases_file)
                 else:
@@ -657,7 +687,18 @@ class Explorer:
                             overlapping_MPIIO, df_mpiio, "MPIIO"
                         )
 
-                        frames = [io_phases_df_posix, io_phases_df_mpiio]
+                        df_hdf5 = df[df["api"] == "H5F"]
+                        df_hdf5 = df_hdf5.sort_values("start")
+
+                        overlapping_HDF5 = overlapping[
+                            overlapping["Chromosome"] == "H5F"
+                        ]
+
+                        io_phases_df_hdf5 = self.merge_overlapping_io_phases(
+                            overlapping_HDF5, df_hdf5, "H5F"
+                        )
+
+                        frames = [io_phases_df_posix, io_phases_df_mpiio, io_phases_df_hdf5]
                         result = pd.concat(frames)
                         feather.write_feather(result, phases_file)
                     else:
