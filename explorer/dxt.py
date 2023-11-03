@@ -36,6 +36,8 @@ import logging.handlers
 import pyarrow.feather as feather
 # import darshan.backend.cffi_backend as darshanll
 
+from bs4 import BeautifulSoup
+
 from recorder_utils import RecorderReader
 from recorder_utils.build_offset_intervals import build_offset_intervals
 from explorer import version as dxt_version
@@ -1190,7 +1192,7 @@ class Explorer:
 
                     sys.exit(os.EX_SOFTWARE)
 
-    def generate_index(self, file, report, log_type):
+    def generate_index(self, filename, report, log_type):
         """Generate index file with all the plots."""
         file_ids = self.list_files(report, log_type, False)
 
@@ -1255,6 +1257,25 @@ class Explorer:
             "DXT_EXPLORER_RUNTIME",
             "{:03f}".format(self.explorer_end_time - self.explorer_start_time),
         )
+
+        size = 176
+        command = "drishti --html --light --size {} {}".format(size, filename)
+
+        args = shlex.split(command)
+        s = subprocess.Popen(args, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+        sOutput, sError = s.communicate()
+
+        if s.returncode == 0:
+            drishti_output = open(filename + ".drishti", "w")
+            drishti_output.write(sOutput.decode())
+
+            with open(filename + '.html', "r") as html_file:
+                template = template.replace("DRISHTI_CODE", str(BeautifulSoup(html_file.read(), "html.parser").code))
+            with open(filename + '.html', "r") as html_file:
+                template = template.replace("DRISHTI_STYLE", str(BeautifulSoup(html_file.read(), "html.parser").style.decode_contents()))
+            
+        else:
+            sys.exit(os.EX_SOFTWARE)
 
         output_file = "{}/{}.html".format(self.prefix, "index")
 
