@@ -42,10 +42,10 @@ from packaging import version
 
 from recorder_utils import RecorderReader
 from recorder_utils.build_offset_intervals import build_offset_intervals
-from explorer import version as dxt_version
 
 LOG_TYPE_DARSHAN = 0
 LOG_TYPE_RECORDER = 1
+
 
 class Explorer:
     def __init__(self, args):
@@ -124,7 +124,7 @@ class Explorer:
 
         if self.args.ost_usage_transfer:
             self.generate_ost_usage_transfer_plot(filename, report, log_type)
-            
+
         self.generate_index(filename, report, log_type)
 
     def check_log_type(self, path):
@@ -132,12 +132,15 @@ class Explorer:
             if not os.path.isfile(path):
                 self.logger.error('Unable to open .darshan file.')
                 sys.exit(os.EX_NOINPUT)
-            else: return LOG_TYPE_DARSHAN
-        else: # check whether is a valid recorder log
+            else:
+                return LOG_TYPE_DARSHAN
+        else:
+            # check whether is a valid recorder log
             if not os.path.isdir(path):
                 self.logger.error('Unable to open recorder folder.')
                 sys.exit(os.EX_NOINPUT)
-            else: return LOG_TYPE_RECORDER
+            else:
+                return LOG_TYPE_RECORDER
 
     def list_files(self, report, log_type, display=True):
         """Create a dictionary of file id as key and file name as value."""
@@ -363,7 +366,7 @@ class Explorer:
                 runtime = result['end'].max()
                 # The next 4 lines are added for demo hdf5 in plot
                 if self.args.debug:
-                    df_hdf5_temp = {"api" : "H5F"}
+                    df_hdf5_temp = {"api": "H5F"}
                     for _ in range(3):
                         result.loc[len(result.index)] = df_hdf5_temp
 
@@ -373,7 +376,7 @@ class Explorer:
 
         if self.args.csv:
             result.to_csv(
-                subset_dataset_file + ".dxt.csv", mode="w", index=False, header=True 
+                subset_dataset_file + ".dxt.csv", mode="w", index=False, header=True
             )
 
         column_names = ["total_logs", "runtime"]
@@ -441,12 +444,13 @@ class Explorer:
                     return 'H5F'
                 else:
                     return 'POSIX'
-                
+
             def add_operation(row):
                 if 'read' in row['function']:
                     return 'read'
-                else: return 'write'
-            
+                else:
+                    return 'write'
+
             df_intervals = build_offset_intervals(report)
             df_intervals['api'] = df_intervals.apply(add_api, axis=1)
             df_intervals['operation'] = df_intervals.apply(add_operation, axis=1)
@@ -917,7 +921,7 @@ class Explorer:
 
                         else:
                             self.logger.warning("no data to generate interactive plots")
-                      
+
                     else:
                         self.logger.error(
                             "failed to generate the interactive plots (error %s)",
@@ -1184,7 +1188,7 @@ class Explorer:
 
                     else:
                         self.logger.warning("no data to generate interactive OST usage transfer plots")
-                    
+
                 else:
                     self.logger.error(
                         "failed to generate interactive OST usage transfer plots (error %s)",
@@ -1274,7 +1278,6 @@ class Explorer:
                 template = template.replace("DRISHTI_CODE", str(BeautifulSoup(html_file.read(), "html.parser").code))
             with open(filename + '.html', "r") as html_file:
                 template = template.replace("DRISHTI_STYLE", str(BeautifulSoup(html_file.read(), "html.parser").style.decode_contents()))
-            
         else:
             sys.exit(os.EX_SOFTWARE)
 
@@ -1310,6 +1313,7 @@ class Explorer:
                     )
 
         return use_file
+
 
 def main():
     PARSER = argparse.ArgumentParser(description="DXT Explorer: ")
@@ -1459,6 +1463,7 @@ def main():
 
     EXPLORE = Explorer(ARGS)
     EXPLORE.run()
- 
+
+
 if __name__ == "__main__":
     main()
