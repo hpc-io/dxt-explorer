@@ -66,6 +66,9 @@ options = vars(options)
 
 df = feather.read_feather(options["file"])
 
+if df.empty:
+    quit()
+
 df["duration"] = df["end"] - df["start"]
 
 duration = max(df["end"]) - min(df["start"])

@@ -27,6 +27,7 @@ setuptools.setup(
         "pyarrow>=10.0.1",
         "bs4>=0.0.1",
         "drishti-io>=0.5",
+        "recorder-utils"
     ],
     include_package_data=True,
     entry_points={"console_scripts": ["dxt-explorer=explorer.dxt:main"]},
