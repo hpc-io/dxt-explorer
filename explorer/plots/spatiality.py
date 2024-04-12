@@ -38,6 +38,7 @@ parser.add_option(
 options = vars(options)
 
 df = feather.read_feather(options["file"])
+
 if df.empty:
     quit()
 

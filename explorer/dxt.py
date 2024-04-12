@@ -37,6 +37,8 @@ import pyarrow.feather as feather
 # import darshan.backend.cffi_backend as darshanll
 
 from bs4 import BeautifulSoup
+from explorer import version as dxt_version
+from packaging import version
 
 from recorder_utils import RecorderReader
 from recorder_utils.build_offset_intervals import build_offset_intervals
@@ -122,7 +124,7 @@ class Explorer:
 
         if self.args.ost_usage_transfer:
             self.generate_ost_usage_transfer_plot(filename, report, log_type)
-
+            
         self.generate_index(filename, report, log_type)
 
     def check_log_type(self, path):
@@ -138,10 +140,11 @@ class Explorer:
             else: return LOG_TYPE_RECORDER
 
     def list_files(self, report, log_type, display=True):
+        """Create a dictionary of file id as key and file name as value."""
         total = 0
         file_ids = {}
+
         if log_type == LOG_TYPE_DARSHAN:
-            """Create a dictionary of file id as key and file name as value."""
             file_ids = report.log["name_records"]
             for key, value in dict(file_ids).items():
                 if value == "<STDOUT>":
@@ -914,7 +917,7 @@ class Explorer:
 
                         else:
                             self.logger.warning("no data to generate interactive plots")
-
+                      
                     else:
                         self.logger.error(
                             "failed to generate the interactive plots (error %s)",
@@ -945,7 +948,6 @@ class Explorer:
             self.logger.info("No data to generate plots")
         else:
             # Generated the CSV files for each plot
-
             self.subset_dataset(file, file_ids, report, log_type)
 
             for file_id, file_name in file_ids.items():
@@ -993,6 +995,7 @@ class Explorer:
     def generate_spatiality_plot(self, file, report, log_type):
         """Generate an interactive spatiality plot."""
         file_ids = self.list_files(report, log_type)
+
         if len(file_ids) == 0:
             self.logger.info("No data to generate plots")
         else:
@@ -1022,6 +1025,8 @@ class Explorer:
 
                     if os.path.exists(output_file):
                         self.logger.info("SUCCESS: {}".format(output_file))
+                    else:
+                        self.logger.warning("no data to generate spatiality plots")
 
                         if self.args.browser:
                             webbrowser.open("file://{}".format(output_file), new=2)
@@ -1071,6 +1076,8 @@ class Explorer:
 
                     if os.path.exists(output_file):
                         self.logger.info("SUCCESS: {}".format(output_file))
+                    else:
+                        self.logger.warning("no data to generate interactive plots")
 
                         if self.args.browser:
                             webbrowser.open("file://{}".format(output_file), new=2)
@@ -1123,6 +1130,8 @@ class Explorer:
 
                     if os.path.exists(output_file):
                         self.logger.info("SUCCESS: {}".format(output_file))
+                    else:
+                        self.logger.warning("no data to generate interactive plots")
 
                         if self.args.browser:
                             webbrowser.open("file://{}".format(output_file), new=2)
@@ -1147,6 +1156,7 @@ class Explorer:
         if len(file_ids) == 0:
             self.logger.info("No data to generate plots")
         else:
+
             self.subset_dataset(file, file_ids, report, log_type)
 
             for file_id, file_name in file_ids.items():
@@ -1287,6 +1297,28 @@ class Explorer:
         self.logger.info(
             "You can open the index.html file in your browser to interactively explore all plots"
         )
+
+    def check_log_version(self, file, log_version, library_version):
+        use_file = file
+        if version.parse(log_version) < version.parse(library_version):
+            use_file = file.replace(".darshan", ".converted.darshan")
+            self.logger.info(
+                'Converting .darshan log from {} to {}: format: saving output file "{}" in the current working directory.'.format(
+                    log_version, library_version, use_file
+                )
+            )
+
+            if not os.path.isfile(use_file):
+                ret = os.system("darshan-convert {} {}".format(file, use_file))
+
+                if ret != 0:
+                    self.logger.error(
+                        "Unable to convert .darshan file to version {}".format(
+                            library_version
+                        )
+                    )
+
+        return use_file
 
 def main():
     PARSER = argparse.ArgumentParser(description="DXT Explorer: ")

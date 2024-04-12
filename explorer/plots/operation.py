@@ -908,6 +908,8 @@ if ".darshan" not in options["file1"]:
         sOutput, sError = s.communicate()
 
     if s is None or s.returncode == 0:
+    	drishti_output = open(file + ".drishti", "w")
+    	drishti_output.write(sOutput.decode())
 
         output_doc = BeautifulSoup()
         output_doc.append(output_doc.new_tag("body"))
@@ -916,11 +918,11 @@ if ".darshan" not in options["file1"]:
         with open(options["output"], "r") as html_file:
             output_doc.body.extend(BeautifulSoup(html_file.read(), "html.parser").body)
 
-        with open(drishti_file + '.html', "r") as html_file:
-            output_doc.head.extend(BeautifulSoup(html_file.read(), "html.parser").head)
+    with open(file + ".darshan.html", "r") as html_file:
+        output_doc.head.extend(BeautifulSoup(html_file.read(), "html.parser").head)
 
-        with open(drishti_file + '.html', "r") as html_file:
-            output_doc.body.extend(BeautifulSoup(html_file.read(), "html.parser").body)
+    with open(file + ".darshan.html", "r") as html_file:
+        output_doc.body.extend(BeautifulSoup(html_file.read(), "html.parser").body)
 
         output_doc.style.append(BeautifulSoup("pre { padding-left: 60px;}", "html.parser"))
 
