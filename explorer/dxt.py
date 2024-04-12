@@ -1033,9 +1033,6 @@ class Explorer:
 
                         self.generated_files[file_id].append(output_file)
 
-                    else:
-                        self.logger.warning("no data to generate spatiality plots")
-
                 else:
                     self.logger.error(
                         "failed to generate the spatiality plots (error %s)",
@@ -1084,9 +1081,6 @@ class Explorer:
 
                         self.generated_files[file_id].append(output_file)
 
-                    else:
-                        self.logger.warning("no data to generate I/O phase plots")
-                    
                 else:
                     self.logger.error(
                         "failed to generate I/O phase plots (error %s)",
@@ -1131,15 +1125,12 @@ class Explorer:
                     if os.path.exists(output_file):
                         self.logger.info("SUCCESS: {}".format(output_file))
                     else:
-                        self.logger.warning("no data to generate interactive plots")
+                        self.logger.warning("no data to generate interactive OST usage operation plots")
 
                         if self.args.browser:
                             webbrowser.open("file://{}".format(output_file), new=2)
 
                         self.generated_files[file_id].append(output_file)
-
-                    else:
-                        self.logger.warning("no data to generate interactive OST usage operation plots")
 
                 else:
                     self.logger.error(
