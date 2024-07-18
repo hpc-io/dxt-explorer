@@ -7,4 +7,4 @@ pyranges>=0.0.120
 darshan
 pyarrow>=10.0.1
 bs4>=0.0.1
-drishti-io>=0.5
+drishti-io>=0.8
