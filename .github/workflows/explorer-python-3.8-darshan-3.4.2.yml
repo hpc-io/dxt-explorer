@@ -134,13 +134,9 @@ jobs:
 
           dxt-explorer --debug --start 3.7 --end 3.9 --from 1 --to 100 sample/jeanbez_8_benchmark_parallel_id45195555_8-6-50011-11681279140261054765_1628283217.darshan
 
-      - name: Setup tmate session
-        if: ${{ failure() }}
-        uses: mxschmitt/action-tmate@v3
-
       - name: Upload Artifact
         if: always()
-        uses: actions/upload-artifact@v2
+        uses: actions/upload-artifact@v4
         with:
           name: tests
           path: sample/**
