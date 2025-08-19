@@ -34,7 +34,9 @@ jobs:
 
       - name: Install DXT Explorer
         run: |
-          pip install --upgrade pip
+          python -m ensurepip --upgrade
+          pip install --upgrade setuptools
+          pip install darshan==3.4.2
           pip install -r requirements.txt
           pip install .
 
