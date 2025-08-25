@@ -32,13 +32,13 @@ jobs:
       - name: Install macOS Dependencies
         if: runner.os == 'macOS'
         run: |
-          brew install autoconf automake
+          brew install libtool autoconf automake
 
       - name: Install Windows Dependencies
         if: runner.os == 'Windows'
         shell: powershell
         run: |
-          choco install -r --no-progress -y choco install -y msys2 make zip 
+          choco install -r --no-progress -y msys2 make zip 
           $env:Path = "C:\tools\msys64\usr\bin;" + $env:Path
           Write-Host "Updated PATH: $env:Path"
 
