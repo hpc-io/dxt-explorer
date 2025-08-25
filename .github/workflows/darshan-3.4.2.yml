@@ -25,6 +25,30 @@ jobs:
         with:
           submodules: true
 
+      - name: Dependencies
+        run: |
+          git clone https://github.com/darshan-hpc/darshan.git
+
+      - name: Install macOS Dependencies
+        if: runner.os == 'macOS'
+        run: |
+          brew install autoconf
+
+      - name: Install Windows Dependencies
+        if: runner.os == 'Windows'
+        run: |
+          choco install -r --no-progress -y make unzip automake autoconf zip 
+
+      - name: Build Darshan
+        run: |
+          cd darshan
+          git checkout darshan-3.4.0
+          bash prepare.sh
+          cd darshan-util
+          ./configure
+          make
+          make install
+
       - name: Install DXT Explorer
         run: |
           python -m ensurepip --upgrade
