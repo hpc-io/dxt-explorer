@@ -32,12 +32,12 @@ jobs:
       - name: Install macOS Dependencies
         if: runner.os == 'macOS'
         run: |
-          brew install autoconf
+          brew install autoconf automake
 
       - name: Install Windows Dependencies
         if: runner.os == 'Windows'
         run: |
-          choco install -r --no-progress -y make unzip automake autoconf zip 
+          choco install -r --no-progress -y choco install -y msys2 make zip 
 
       - name: Build Darshan
         run: |
