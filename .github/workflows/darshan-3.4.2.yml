@@ -36,8 +36,11 @@ jobs:
 
       - name: Install Windows Dependencies
         if: runner.os == 'Windows'
+        shell: powershell
         run: |
           choco install -r --no-progress -y choco install -y msys2 make zip 
+          $env:Path = "C:\tools\msys64\usr\bin;" + $env:Path
+          Write-Host "Updated PATH: $env:Path"
 
       - name: Build Darshan
         run: |
