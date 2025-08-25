@@ -36,8 +36,8 @@ jobs:
         run: |
           python -m ensurepip --upgrade
           pip install --upgrade setuptools
-          pip install numpy>2
           pip install -r requirements.txt
+          pip install numpy>2
           pip install .
 
       - name: Run DXT Explorer (help)
