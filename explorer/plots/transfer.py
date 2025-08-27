@@ -154,7 +154,7 @@ values = [
     "100M-1G",
     "1G+",
 ]
-df["bin"] = np.select(conditions, values)
+df["bin"] = np.select(conditions, values, default='Other')
 
 fig = px.scatter(
     df,
