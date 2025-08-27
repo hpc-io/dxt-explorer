@@ -17,7 +17,7 @@ setuptools.setup(
     long_description_content_type="text/markdown",
     url="https://github.com/hpc-io/dxt-explorer",
     install_requires=[
-        "numpy==1.23",
+        "numpy>=1.23",
         "Pillow>=9.4.0",
         "plotly>=5.13.0",
         "argparse>=1.4.0",
@@ -42,5 +42,5 @@ setuptools.setup(
         "License :: Other/Proprietary License",
         "Programming Language :: Python :: 3 :: Only",
     ],
-    python_requires=">=3.6",
+    python_requires=">=3.8",
 )

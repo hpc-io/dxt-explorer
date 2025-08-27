@@ -39,6 +39,9 @@ options = vars(options)
 
 df = feather.read_feather(options["file"])
 
+if df.empty:
+    quit()
+
 df["duration"] = df["end"] - df["start"]
 rank_gap = max(df["rank"]) * 0.075
 maximum_rank = max(df["rank"])
@@ -96,7 +99,7 @@ conditions = [
 
 values = ["0", "1", "2", "3", "4", "5", "6", "7", "8", "9"]
 
-df["bin"] = np.select(conditions, values)
+df["bin"] = np.select(conditions, values, default='Other')
 
 fig = px.scatter(
     df,

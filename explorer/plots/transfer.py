@@ -66,6 +66,9 @@ options = vars(options)
 
 df = feather.read_feather(options["file"])
 
+if df.empty:
+    quit()
+
 df["duration"] = df["end"] - df["start"]
 
 duration = max(df["end"]) - min(df["start"])
@@ -151,7 +154,7 @@ values = [
     "100M-1G",
     "1G+",
 ]
-df["bin"] = np.select(conditions, values)
+df["bin"] = np.select(conditions, values, default='Other')
 
 fig = px.scatter(
     df,
