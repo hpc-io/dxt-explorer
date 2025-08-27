@@ -114,6 +114,15 @@ def determine_legend(fig, column):
 
 parser = OptionParser()
 parser.add_option(
+    "-p",
+    "--file0",
+    type="string",
+    default=None,
+    help="Traces path",
+    metavar="FILE",
+)
+
+parser.add_option(
     "-f",
     "--file1",
     type="string",
@@ -267,13 +276,14 @@ if not options["graph_type"]:
 else:
     maximum_limit = options["runtime"]
 
-if ("POSIX" in df["api"].unique()) & ("MPIIO" in df["api"].unique()):
-    facet_row = "api"
-    category_orders = {"api": ["MPIIO", "POSIX"]}
-else:
-    facet_row = None
-    category_orders = None
-
+facet_row = "api"
+category_orders = {"api": []}
+if ("H5F" in df["api"].unique()):
+    category_orders["api"].append("H5F")
+if ("MPIIO" in df["api"].unique()):
+    category_orders["api"].append("MPIIO")
+if ("POSIX" in df["api"].unique()):
+    category_orders["api"].append("POSIX")
 
 dxt_issues = []
 
@@ -797,6 +807,8 @@ for annotation in fig.layout.annotations:
         annotation.text = "POSIX"
     elif "MPIIO" in annotation.text:
         annotation.text = "MPIIO"
+    elif "H5F" in annotation.text:
+        annotation.text = "HDF5"
 
 if any_bottleneck:
     fig_annotations = fig.layout.annotations
@@ -870,46 +882,51 @@ if any_bottleneck:
 
 fig.write_html(options["output"])
 
-json_data = {}
-json_data["dxt"] = dxt_issues
-json_file_name = options["file1"].split(".dxt")[0] + ".json"
-with open(json_file_name, "w") as outfile:
-    json.dump(json_data, outfile)
-json_file_path = os.path.abspath(json_file_name)
+if ".darshan" not in options["file1"]:
+    json_data = {}
+    json_data["dxt"] = dxt_issues
+    json_file_name = options["file1"].split(".dxt")[0] + ".json"
+    with open(json_file_name, "w") as outfile:
+        json.dump(json_data, outfile)
+    json_file_path = os.path.abspath(json_file_name)
 
-if any_bottleneck:
-    size = 159
-else:
-    size = 176
+    if any_bottleneck:
+        size = 159
+    else:
+        size = 176
 
-file = options["file1"].split(".darshan")[0]
-command = "drishti --html --light --size {} --json {} {}.darshan".format(
-    size, json_file_path, file
-)
-args = shlex.split(command)
-s = subprocess.Popen(args, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-sOutput, sError = s.communicate()
+    file = options["file0"]
+    drishti_file = options["file1"].split(".dxt")[0]
 
-if s.returncode == 0:
-    drishti_output = open(file + ".drishti", "w")
-    drishti_output.write(sOutput.decode())
+    command = "drishti --html --split --light --size {} --json {} {}".format(size, json_file_path, file)
 
-    output_doc = BeautifulSoup()
-    output_doc.append(output_doc.new_tag("body"))
-    output_doc.append(output_doc.new_tag("head"))
+    s = None
 
-    with open(options["output"], "r") as html_file:
-        output_doc.body.extend(BeautifulSoup(html_file.read(), "html.parser").body)
+    if not os.path.exists(drishti_file + '.html'):
+        args = shlex.split(command)
+        s = subprocess.Popen(args, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+        sOutput, sError = s.communicate()
 
-    with open(file + ".darshan.html", "r") as html_file:
-        output_doc.head.extend(BeautifulSoup(html_file.read(), "html.parser").head)
+    if s is None or s.returncode == 0:
+        drishti_output = open(file + ".drishti", "w")
+        drishti_output.write(sOutput.decode())
 
-    with open(file + ".darshan.html", "r") as html_file:
-        output_doc.body.extend(BeautifulSoup(html_file.read(), "html.parser").body)
+        output_doc = BeautifulSoup()
+        output_doc.append(output_doc.new_tag("body"))
+        output_doc.append(output_doc.new_tag("head"))
 
-    output_doc.style.append(BeautifulSoup("pre { padding-left: 60px;}", "html.parser"))
+        with open(options["output"], "r") as html_file:
+            output_doc.body.extend(BeautifulSoup(html_file.read(), "html.parser").body)
 
-    with open(options["output"], "w") as output_file:
-        output_file.write(str(output_doc))
-else:
-    sys.exit(os.EX_SOFTWARE)
+        with open(file + ".darshan.html", "r") as html_file:
+            output_doc.head.extend(BeautifulSoup(html_file.read(), "html.parser").head)
+
+        with open(file + ".darshan.html", "r") as html_file:
+            output_doc.body.extend(BeautifulSoup(html_file.read(), "html.parser").body)
+
+            output_doc.style.append(BeautifulSoup("pre { padding-left: 60px;}", "html.parser"))
+
+            with open(options["output"], "w") as output_file:
+                output_file.write(str(output_doc))
+    else:
+        sys.exit(os.EX_SOFTWARE)
