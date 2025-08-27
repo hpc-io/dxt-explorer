@@ -47,6 +47,7 @@ jobs:
           ./configure
           make
           sudo make install
+          sudo ldconfig
 
       - name: Install DXT Explorer
         run: |
