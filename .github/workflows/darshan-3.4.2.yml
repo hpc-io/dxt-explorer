@@ -47,6 +47,10 @@ jobs:
           ./configure
           make
           sudo make install
+
+      - name: Configure Linux
+        if: runner.os == 'Linux'
+        run: |
           sudo ldconfig
 
       - name: Install DXT Explorer
