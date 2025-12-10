@@ -37,7 +37,6 @@ import pyarrow.feather as feather
 # import darshan.backend.cffi_backend as darshanll
 
 from explorer import version as dxt_version
-from packaging import version
 
 
 class Explorer:
@@ -1170,6 +1169,7 @@ class Explorer:
         self.logger.info(
             "You can open the index.html file in your browser to interactively explore all plots"
         )
+
 
 def main():
     PARSER = argparse.ArgumentParser(description="DXT Explorer: ")
