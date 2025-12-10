@@ -19,7 +19,7 @@ def add_trace_to_graph(dataframe, color_scale=None, stragglers=False):
     if stragglers:
         custom_data = ["rank", "duration"]
     else:
-        custom_data = ["rank", "duration", "size", "offset", "osts"]
+        custom_data = ["rank", "duration", "size", "offset", "osts", "pthread_id"]
 
     fig.add_traces(
         list(
@@ -229,8 +229,8 @@ df = feather.read_feather(options["file1"])
 if df.empty:
     quit()
 
-df["osts"].fillna(value="-", inplace=True)
-df.drop(df.tail(2).index, inplace=True)
+df["osts"] = df["osts"].astype(object).fillna("-")
+df["pthread_id"] = df["pthread_id"].astype(object).fillna("-")
 
 if not options["graph_type"]:
     if options["start"] is not None:
@@ -590,7 +590,7 @@ if any_bottleneck:
         error_x="duration",
         render_mode="auto",
         facet_row=facet_row,
-        custom_data=["rank", "duration", "size", "offset", "osts"],
+        custom_data=["rank", "duration", "size", "offset", "osts", "pthread_id"],
         color_discrete_sequence=["#d0e6f5", "#f7d8d5"],
         category_orders=category_orders,
     )
@@ -617,7 +617,7 @@ else:
         render_mode="auto",
         facet_row=facet_row,
         color_discrete_sequence=["#3c93c2", "#f0746e"],
-        custom_data=["rank", "duration", "size", "offset", "osts"],
+        custom_data=["rank", "duration", "size", "offset", "osts", "pthread_id"],
         category_orders=category_orders,
     )
 
@@ -774,7 +774,8 @@ fig.for_each_trace(
                 "Duration: %{customdata[1]}",
                 "Size: %{customdata[2]}",
                 "Offset: %{customdata[3]}",
-                "Osts: %{customdata[4]}",
+                "Lustre OSTs: %{customdata[4]}",
+                "Thread ID: %{customdata[5]}",
             ]
         )
     )
@@ -901,10 +902,10 @@ if s.returncode == 0:
     with open(options["output"], "r") as html_file:
         output_doc.body.extend(BeautifulSoup(html_file.read(), "html.parser").body)
 
-    with open(file + ".darshan.html", "r") as html_file:
+    with open(file + ".html", "r") as html_file:
         output_doc.head.extend(BeautifulSoup(html_file.read(), "html.parser").head)
 
-    with open(file + ".darshan.html", "r") as html_file:
+    with open(file + ".html", "r") as html_file:
         output_doc.body.extend(BeautifulSoup(html_file.read(), "html.parser").body)
 
     output_doc.style.append(BeautifulSoup("pre { padding-left: 60px;}", "html.parser"))

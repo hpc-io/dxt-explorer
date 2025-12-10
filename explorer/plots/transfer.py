@@ -69,6 +69,8 @@ df = feather.read_feather(options["file"])
 if df.empty:
     quit()
 
+df["osts"] = df["osts"].astype(object).fillna("-")
+
 df["duration"] = df["end"] - df["start"]
 
 duration = max(df["end"]) - min(df["start"])
@@ -125,6 +127,9 @@ def paste0():
         label = label + "-"
     else:
         label = label + df["osts"].apply(str)
+
+    label += "<br>" + "Thread ID: " + df["pthread_id"].apply(str)
+
     return label
 
 

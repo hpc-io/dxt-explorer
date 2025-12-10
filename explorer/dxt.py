@@ -268,6 +268,7 @@ class Explorer:
             "start",
             "end",
             "osts",
+            "pthread_id"
         ]
         total_logs = 0
         runtime = 0
@@ -1169,29 +1170,6 @@ class Explorer:
         self.logger.info(
             "You can open the index.html file in your browser to interactively explore all plots"
         )
-
-    def check_log_version(self, file, log_version, library_version):
-        use_file = file
-        if version.parse(log_version) < version.parse(library_version):
-            use_file = file.replace(".darshan", ".converted.darshan")
-            self.logger.info(
-                'Converting .darshan log from {} to {}: format: saving output file "{}" in the current working directory.'.format(
-                    log_version, library_version, use_file
-                )
-            )
-
-            if not os.path.isfile(use_file):
-                ret = os.system("darshan-convert {} {}".format(file, use_file))
-
-                if ret != 0:
-                    self.logger.error(
-                        "Unable to convert .darshan file to version {}".format(
-                            library_version
-                        )
-                    )
-
-        return use_file
-
 
 def main():
     PARSER = argparse.ArgumentParser(description="DXT Explorer: ")
