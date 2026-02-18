@@ -30,12 +30,12 @@ import datetime
 import subprocess
 import webbrowser
 import pandas as pd
-import pkg_resources
 import pyranges as pr
 import logging.handlers
 import pyarrow.feather as feather
 # import darshan.backend.cffi_backend as darshanll
 
+from importlib import resources
 from explorer import version as dxt_version
 from packaging import version
 
@@ -730,7 +730,7 @@ class Explorer:
                                 self.prefix, file_id, "snapshot", snapshot, "operation"
                             )
                             path = "plots/operation.py"
-                            script = pkg_resources.resource_filename(__name__, path)
+                            script = str(resources.files(__package__ or __name__).joinpath(path))
 
                             command = "python3 {} -f {}.{}.{}-{}.dxt -i {}.{}.{}-{}.io_phases {} {} -o {} -x {} -t {} -r {}".format(
                                 script,
@@ -792,7 +792,7 @@ class Explorer:
                         self.prefix, file_id, "operation"
                     )
                     path = "plots/operation.py"
-                    script = pkg_resources.resource_filename(__name__, path)
+                    script = str(resources.files(__package__ or __name__).joinpath(path))
 
                     command = "python3 {} -f {}.{}.dxt -i {}.{}.io_phases{} {} -o {} -x {}".format(
                         script,
@@ -864,7 +864,7 @@ class Explorer:
                 output_file = "{}/{}-{}.html".format(self.prefix, file_id, "transfer")
 
                 path = "plots/transfer.py"
-                script = pkg_resources.resource_filename(__name__, path)
+                script = str(resources.files(__package__ or __name__).joinpath(path))
 
                 command = "python3 {} -f {}.{}.dxt {} -o {} -x {}".format(
                     script, file, file_id, limits, output_file, file_name
@@ -912,7 +912,7 @@ class Explorer:
                 output_file = "{}/{}-{}.html".format(self.prefix, file_id, "spatiality")
 
                 path = "plots/spatiality.py"
-                script = pkg_resources.resource_filename(__name__, path)
+                script = str(resources.files(__package__ or __name__).joinpath(path))
 
                 command = "python3 {} -f {}.{}.dxt -o {} -x {}".format(
                     script, file, file_id, output_file, file_name
@@ -959,7 +959,7 @@ class Explorer:
             for file_id, file_name in file_ids.items():
                 output_file = "{}/{}-{}.html".format(self.prefix, file_id, "io_phase")
                 path = "plots/io_phase.py"
-                script = pkg_resources.resource_filename(__name__, path)
+                script = str(resources.files(__package__ or __name__).joinpath(path))
 
                 command = "python3 {} -f {}.{}.io_phases -o {} -x {}".format(
                     script, file, file_id, output_file, file_name
@@ -1007,7 +1007,7 @@ class Explorer:
                     self.prefix, file_id, "ost_usage_operation"
                 )
                 path = "plots/ost_usage_operation.py"
-                script = pkg_resources.resource_filename(__name__, path)
+                script = str(resources.files(__package__ or __name__).joinpath(path))
 
                 command = "python3 {} -f {}.{}.dxt -o {} -x {}".format(
                     script, file, file_id, output_file, file_name
@@ -1057,7 +1057,7 @@ class Explorer:
                     self.prefix, file_id, "ost_usage_transfer"
                 )
                 path = "plots/ost_usage_transfer.py"
-                script = pkg_resources.resource_filename(__name__, path)
+                script = str(resources.files(__package__ or __name__).joinpath(path))
 
                 command = "python3 {} -f {}.{}.dxt -o {} -x {}".format(
                     script, file, file_id, output_file, file_name
