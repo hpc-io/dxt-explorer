@@ -230,7 +230,7 @@ if df.empty:
     quit()
 
 df["osts"] = df["osts"].fillna("-")
-df = df.iloc[:-2] # TODO: review why this is needed
+df = df.iloc[:-2]  # TODO: review why this is needed
 
 if not options["graph_type"]:
     if options["start"] is not None:
