@@ -229,8 +229,8 @@ df = feather.read_feather(options["file1"])
 if df.empty:
     quit()
 
-df["osts"].fillna(value="-", inplace=True)
-df.drop(df.tail(2).index, inplace=True)
+df["osts"] = df["osts"].fillna("-")
+df = df.iloc[:-2] # TODO: review why this is needed
 
 if not options["graph_type"]:
     if options["start"] is not None:

@@ -298,7 +298,7 @@ class Explorer:
                 temp_result["end"] = temp_result["end"].round(decimals=4)
 
                 temp_result.index.name = "segment"
-                temp_result.reset_index(inplace=True)
+                temp_result = temp_result.reset_index()
                 temp_result = temp_result.reindex(columns=column_names)
 
                 df.append(temp_result)
@@ -327,7 +327,7 @@ class Explorer:
                 temp_result["end"] = temp_result["end"].round(decimals=4)
 
                 temp_result.index.name = "segment"
-                temp_result.reset_index(inplace=True)
+                temp_result = temp_result.reset_index()
                 temp_result = temp_result.reindex(columns=column_names)
 
                 df.append(temp_result)
@@ -513,7 +513,8 @@ class Explorer:
                     threshold,
                 ]
 
-        io_phases_df.dropna(inplace=True)
+        io_phases_df = io_phases_df.dropna()
+
         return io_phases_df
 
     def calculate_io_phases(
