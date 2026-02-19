@@ -112,6 +112,14 @@ def determine_legend(fig, column):
     return legend
 
 
+def append_content(target_tag, source_path, part="body"):
+    with open(source_path, "rb") as f:
+        temp_soup = BeautifulSoup(f, "html.parser")
+        source_part = getattr(temp_soup, part)
+        if source_part:
+            target_tag.extend(source_part.contents)
+
+
 parser = OptionParser()
 parser.add_option(
     "-f",
@@ -229,8 +237,8 @@ df = feather.read_feather(options["file1"])
 if df.empty:
     quit()
 
-df["osts"] = df["osts"].astype(object).fillna("-")
-df["pthread_id"] = df["pthread_id"].astype(object).fillna("-")
+df["osts"] = df["osts"].fillna("-")
+df = df.iloc[:-2]  # TODO: review why this is needed
 
 if not options["graph_type"]:
     if options["start"] is not None:
@@ -884,33 +892,32 @@ else:
     size = 176
 
 file = options["file1"].split(".darshan")[0]
-command = "drishti --html --light --size {} --json {} {}.darshan".format(
-    size, json_file_path, file
+command = "drishti --html --light --size {} --json {} --export_dir {} {}.darshan".format(
+    size, json_file_path, file.split('/')[0], file
 )
+
 args = shlex.split(command)
 s = subprocess.Popen(args, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
 sOutput, sError = s.communicate()
 
 if s.returncode == 0:
-    drishti_output = open(file + ".drishti", "w")
-    drishti_output.write(sOutput.decode())
+    with open(file + ".drishti", "w", encoding="utf-8") as drishti_output:
+        drishti_output.write(sOutput.decode("utf-8"))
 
-    output_doc = BeautifulSoup()
-    output_doc.append(output_doc.new_tag("body"))
-    output_doc.append(output_doc.new_tag("head"))
+    output_doc = BeautifulSoup("<html><head></head><body></body></html>", "html.parser")
 
-    with open(options["output"], "r") as html_file:
-        output_doc.body.extend(BeautifulSoup(html_file.read(), "html.parser").body)
+    meta_tag = output_doc.new_tag("meta", charset="utf-8")
+    output_doc.head.append(meta_tag)
 
-    with open(file + ".html", "r") as html_file:
-        output_doc.head.extend(BeautifulSoup(html_file.read(), "html.parser").head)
+    append_content(output_doc.body, options["output"], "body")
+    append_content(output_doc.head, file + ".html", "head")
+    append_content(output_doc.body, file + ".html", "body")
 
-    with open(file + ".html", "r") as html_file:
-        output_doc.body.extend(BeautifulSoup(html_file.read(), "html.parser").body)
+    style_tag = output_doc.new_tag("style")
+    style_tag.string = "pre { padding-left: 60px;}"
+    output_doc.head.append(style_tag)
 
-    output_doc.style.append(BeautifulSoup("pre { padding-left: 60px;}", "html.parser"))
-
-    with open(options["output"], "w") as output_file:
-        output_file.write(str(output_doc))
+    with open(options["output"], "wb") as output_file:
+        output_file.write(output_doc.encode("utf-8"))
 else:
     sys.exit(os.EX_SOFTWARE)

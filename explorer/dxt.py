@@ -30,12 +30,12 @@ import datetime
 import subprocess
 import webbrowser
 import pandas as pd
-import pkg_resources
 import pyranges as pr
 import logging.handlers
 import pyarrow.feather as feather
 # import darshan.backend.cffi_backend as darshanll
 
+from importlib import resources
 from explorer import version as dxt_version
 
 
@@ -298,7 +298,7 @@ class Explorer:
                 temp_result["end"] = temp_result["end"].round(decimals=4)
 
                 temp_result.index.name = "segment"
-                temp_result.reset_index(inplace=True)
+                temp_result = temp_result.reset_index()
                 temp_result = temp_result.reindex(columns=column_names)
 
                 df.append(temp_result)
@@ -327,7 +327,7 @@ class Explorer:
                 temp_result["end"] = temp_result["end"].round(decimals=4)
 
                 temp_result.index.name = "segment"
-                temp_result.reset_index(inplace=True)
+                temp_result = temp_result.reset_index()
                 temp_result = temp_result.reindex(columns=column_names)
 
                 df.append(temp_result)
@@ -422,8 +422,8 @@ class Explorer:
             ]
         )
 
-        overlapping_df_end = overlapping_df[["End"]].to_numpy()
-        overlapping_df_start = overlapping_df[["Start"]].to_numpy()
+        overlapping_df_end = overlapping_df["End"].to_numpy()
+        overlapping_df_start = overlapping_df["Start"].to_numpy()
         interval_duration = 0
 
         for i in range(len(overlapping_df_end) - 1):
@@ -513,7 +513,8 @@ class Explorer:
                     threshold,
                 ]
 
-        io_phases_df.dropna(inplace=True)
+        io_phases_df = io_phases_df.dropna()
+
         return io_phases_df
 
     def calculate_io_phases(
@@ -730,7 +731,7 @@ class Explorer:
                                 self.prefix, file_id, "snapshot", snapshot, "operation"
                             )
                             path = "plots/operation.py"
-                            script = pkg_resources.resource_filename(__name__, path)
+                            script = str(resources.files(__package__ or __name__).joinpath(path))
 
                             command = "python3 {} -f {}.{}.{}-{}.dxt -i {}.{}.{}-{}.io_phases {} {} -o {} -x {} -t {} -r {}".format(
                                 script,
@@ -792,7 +793,7 @@ class Explorer:
                         self.prefix, file_id, "operation"
                     )
                     path = "plots/operation.py"
-                    script = pkg_resources.resource_filename(__name__, path)
+                    script = str(resources.files(__package__ or __name__).joinpath(path))
 
                     command = "python3 {} -f {}.{}.dxt -i {}.{}.io_phases{} {} -o {} -x {}".format(
                         script,
@@ -864,7 +865,7 @@ class Explorer:
                 output_file = "{}/{}-{}.html".format(self.prefix, file_id, "transfer")
 
                 path = "plots/transfer.py"
-                script = pkg_resources.resource_filename(__name__, path)
+                script = str(resources.files(__package__ or __name__).joinpath(path))
 
                 command = "python3 {} -f {}.{}.dxt {} -o {} -x {}".format(
                     script, file, file_id, limits, output_file, file_name
@@ -912,7 +913,7 @@ class Explorer:
                 output_file = "{}/{}-{}.html".format(self.prefix, file_id, "spatiality")
 
                 path = "plots/spatiality.py"
-                script = pkg_resources.resource_filename(__name__, path)
+                script = str(resources.files(__package__ or __name__).joinpath(path))
 
                 command = "python3 {} -f {}.{}.dxt -o {} -x {}".format(
                     script, file, file_id, output_file, file_name
@@ -959,7 +960,7 @@ class Explorer:
             for file_id, file_name in file_ids.items():
                 output_file = "{}/{}-{}.html".format(self.prefix, file_id, "io_phase")
                 path = "plots/io_phase.py"
-                script = pkg_resources.resource_filename(__name__, path)
+                script = str(resources.files(__package__ or __name__).joinpath(path))
 
                 command = "python3 {} -f {}.{}.io_phases -o {} -x {}".format(
                     script, file, file_id, output_file, file_name
@@ -1007,7 +1008,7 @@ class Explorer:
                     self.prefix, file_id, "ost_usage_operation"
                 )
                 path = "plots/ost_usage_operation.py"
-                script = pkg_resources.resource_filename(__name__, path)
+                script = str(resources.files(__package__ or __name__).joinpath(path))
 
                 command = "python3 {} -f {}.{}.dxt -o {} -x {}".format(
                     script, file, file_id, output_file, file_name
@@ -1057,7 +1058,7 @@ class Explorer:
                     self.prefix, file_id, "ost_usage_transfer"
                 )
                 path = "plots/ost_usage_transfer.py"
-                script = pkg_resources.resource_filename(__name__, path)
+                script = str(resources.files(__package__ or __name__).joinpath(path))
 
                 command = "python3 {} -f {}.{}.dxt -o {} -x {}".format(
                     script, file, file_id, output_file, file_name
