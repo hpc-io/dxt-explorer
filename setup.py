@@ -26,7 +26,7 @@ setuptools.setup(
         "darshan",
         "pyarrow>=10.0.1",
         "bs4>=0.0.1",
-        "recorder-utils"
+        "recorder-utils",
         "drishti-io>=0.8",
     ],
     include_package_data=True,
