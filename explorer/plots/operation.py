@@ -906,9 +906,7 @@ if ".darshan" not in options["file1"]:
     file = options["file0"]
     drishti_file = options["file1"].split(".dxt")[0]
 
-    command = "drishti --html --light --size {} --json {} --export_dir {} {}.darshan".format(
-        size, json_file_path, file.split('/')[0], file
-    )
+    command = f"drishti --html --light --size {size} --export_dir {os.path.dirname(file)} --json {json_file_path} {file}.darshan"
 
     s = None
 
