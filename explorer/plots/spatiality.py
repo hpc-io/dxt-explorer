@@ -42,6 +42,9 @@ df = feather.read_feather(options["file"])
 if df.empty:
     quit()
 
+df["osts"] = df["osts"].astype(object).fillna("-")
+df["pthread_id"] = df["pthread_id"].astype(object).fillna("-")
+
 df["duration"] = df["end"] - df["start"]
 rank_gap = max(df["rank"]) * 0.075
 maximum_rank = max(df["rank"])
@@ -77,6 +80,9 @@ def paste0():
         label = label + "-"
     else:
         label = label + df["osts"].apply(str)
+
+    label += "<br>" + "Thread ID: " + df["pthread_id"].apply(str)
+
     return label
 
 

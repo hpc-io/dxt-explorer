@@ -19,7 +19,7 @@ def add_trace_to_graph(dataframe, color_scale=None, stragglers=False):
     if stragglers:
         custom_data = ["rank", "duration"]
     else:
-        custom_data = ["rank", "duration", "size", "offset", "osts"]
+        custom_data = ["rank", "duration", "size", "offset", "osts", "pthread_id"]
 
     fig.add_traces(
         list(
@@ -598,7 +598,7 @@ if any_bottleneck:
         error_x="duration",
         render_mode="auto",
         facet_row=facet_row,
-        custom_data=["rank", "duration", "size", "offset", "osts"],
+        custom_data=["rank", "duration", "size", "offset", "osts", "pthread_id"],
         color_discrete_sequence=["#d0e6f5", "#f7d8d5"],
         category_orders=category_orders,
     )
@@ -625,7 +625,7 @@ else:
         render_mode="auto",
         facet_row=facet_row,
         color_discrete_sequence=["#3c93c2", "#f0746e"],
-        custom_data=["rank", "duration", "size", "offset", "osts"],
+        custom_data=["rank", "duration", "size", "offset", "osts", "pthread_id"],
         category_orders=category_orders,
     )
 
@@ -782,7 +782,8 @@ fig.for_each_trace(
                 "Duration: %{customdata[1]}",
                 "Size: %{customdata[2]}",
                 "Offset: %{customdata[3]}",
-                "Osts: %{customdata[4]}",
+                "Lustre OSTs: %{customdata[4]}",
+                "Thread ID: %{customdata[5]}",
             ]
         )
     )
