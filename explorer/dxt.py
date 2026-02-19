@@ -431,7 +431,7 @@ class Explorer:
             interval_end = overlapping_df_start[i + 1]
             interval_duration = interval_duration + (interval_end - interval_start)
 
-        threshold = float(interval_duration / (len(overlapping_df_end) - 1))
+        threshold = float((interval_duration / (len(overlapping_df_end) - 1)).item())
         merged_df = pd.DataFrame(columns=["Start", "End"])
 
         if len(overlapping_df_end) != 0:
