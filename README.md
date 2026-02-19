@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="https://github.com/hpc-io/dxt-explorer/raw/main/dxt-explorer.png" alt="DXT Explorer"/>
+  <img src="https://github.com/hpc-io/dxt-explorer/raw/main/docs/source/_static/images/dxt-explorer.png" alt="DXT Explorer"/>
 </p>
 
 DXT Explorer is an interactive web-based log analysis tool to visualize Darshan DXT logs and help understand the I/O behavior of applications. Our tool adds an interactive component to Darshan trace analysis that can aid researchers, developers, and end-users to visually inspect their applications' I/O behavior, zoom-in on areas of interest and have a clear picture of where is the I/O problem. 
