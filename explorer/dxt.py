@@ -422,8 +422,8 @@ class Explorer:
             ]
         )
 
-        overlapping_df_end = overlapping_df[["End"]].to_numpy()
-        overlapping_df_start = overlapping_df[["Start"]].to_numpy()
+        overlapping_df_end = overlapping_df["End"].to_numpy()
+        overlapping_df_start = overlapping_df["Start"].to_numpy()
         interval_duration = 0
 
         for i in range(len(overlapping_df_end) - 1):
@@ -431,7 +431,7 @@ class Explorer:
             interval_end = overlapping_df_start[i + 1]
             interval_duration = interval_duration + (interval_end - interval_start)
 
-        threshold = float((interval_duration / (len(overlapping_df_end) - 1)).item())
+        threshold = float(interval_duration / (len(overlapping_df_end) - 1))
         merged_df = pd.DataFrame(columns=["Start", "End"])
 
         if len(overlapping_df_end) != 0:
