@@ -15,7 +15,7 @@ jobs:
       fail-fast: false
       matrix:
         os: ["ubuntu-latest", "macos-latest"]
-        python-version: ["3.8", "3.9", "3.10", "3.11"]
+        python-version: ["3.9", "3.10", "3.11"]
 
     timeout-minutes: 20
 
@@ -124,10 +124,6 @@ jobs:
       - name: Run DXT Explorer (truncate both)
         run: |
           dxt-explorer --debug --start 3.7 --end 3.9 --from 1 --to 100 sample/jeanbez_8_benchmark_parallel_id45195555_8-6-50011-11681279140261054765_1628283217.darshan
-
-      - name: Setup upterm session
-        if: ${{ failure() }}
-        uses: owenthereal/action-upterm@v1
 
       - name: Upload Artifact
         if: always()
