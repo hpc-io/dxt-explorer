@@ -368,18 +368,20 @@ class Explorer:
                 except Exception:
                     pass
 
-            list(
-                map(
-                    lambda rec: graceful_wrapper(report, rec, lustre_records_by_id),
-                    report.records["DXT_POSIX"],
+            if "DXT_POSIX" in report.records:
+                list(
+                    map(
+                        lambda rec: graceful_wrapper(report, rec, lustre_records_by_id),
+                        report.records["DXT_POSIX"],
+                    )
                 )
-            )
-            list(
-                map(
-                    lambda rec: graceful_wrapper(report, rec, lustre_records_by_id),
-                    report.records["DXT_MPIIO"],
+            if "DXT_MPIIO" in report.records:
+                list(
+                    map(
+                        lambda rec: graceful_wrapper(report, rec, lustre_records_by_id),
+                        report.records["DXT_MPIIO"],
+                    )
                 )
-            )
 
         df_posix = []
         if "DXT_POSIX" in report.records:
