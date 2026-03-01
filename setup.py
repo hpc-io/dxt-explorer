@@ -9,7 +9,7 @@ with open("requirements.txt") as f:
 setuptools.setup(
     name="dxt-explorer",
     keywords="dxt-explorer",
-    version="0.4",
+    version="0.5",
     author="Jean Luca Bez, Hammad Ather, Suren Byna",
     author_email="jlbez@lbl.gov, hather@lbl.gov, sbyna@lbl.gov",
     description="DXT Explorer is an interactive web-based log analysis tool to visualize Darshan DXT logs and help understand the I/O behavior.",
@@ -26,6 +26,7 @@ setuptools.setup(
         "darshan",
         "pyarrow>=10.0.1",
         "bs4>=0.0.1",
+        "recorder-utils",
         "drishti-io>=0.8",
     ],
     include_package_data=True,
@@ -42,5 +43,5 @@ setuptools.setup(
         "License :: Other/Proprietary License",
         "Programming Language :: Python :: 3 :: Only",
     ],
-    python_requires=">=3.8",
+    python_requires=">=3.10",
 )

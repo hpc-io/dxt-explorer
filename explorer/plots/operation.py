@@ -122,6 +122,15 @@ def append_content(target_tag, source_path, part="body"):
 
 parser = OptionParser()
 parser.add_option(
+    "-p",
+    "--file0",
+    type="string",
+    default=None,
+    help="Traces path",
+    metavar="FILE",
+)
+
+parser.add_option(
     "-f",
     "--file1",
     type="string",
@@ -275,13 +284,14 @@ if not options["graph_type"]:
 else:
     maximum_limit = options["runtime"]
 
-if ("POSIX" in df["api"].unique()) & ("MPIIO" in df["api"].unique()):
-    facet_row = "api"
-    category_orders = {"api": ["MPIIO", "POSIX"]}
-else:
-    facet_row = None
-    category_orders = None
-
+facet_row = "api"
+category_orders = {"api": []}
+if ("H5F" in df["api"].unique()):
+    category_orders["api"].append("H5F")
+if ("MPIIO" in df["api"].unique()):
+    category_orders["api"].append("MPIIO")
+if ("POSIX" in df["api"].unique()):
+    category_orders["api"].append("POSIX")
 
 dxt_issues = []
 
@@ -806,6 +816,8 @@ for annotation in fig.layout.annotations:
         annotation.text = "POSIX"
     elif "MPIIO" in annotation.text:
         annotation.text = "MPIIO"
+    elif "H5F" in annotation.text:
+        annotation.text = "HDF5"
 
 if any_bottleneck:
     fig_annotations = fig.layout.annotations
@@ -879,42 +891,49 @@ if any_bottleneck:
 
 fig.write_html(options["output"])
 
-json_data = {}
-json_data["dxt"] = dxt_issues
-json_file_name = options["file1"].split(".dxt")[0] + ".json"
-with open(json_file_name, "w") as outfile:
-    json.dump(json_data, outfile)
-json_file_path = os.path.abspath(json_file_name)
+if ".darshan" not in options["file1"]:
+    json_data = {}
+    json_data["dxt"] = dxt_issues
+    json_file_name = options["file1"].split(".dxt")[0] + ".json"
+    with open(json_file_name, "w") as outfile:
+        json.dump(json_data, outfile)
+    json_file_path = os.path.abspath(json_file_name)
 
-if any_bottleneck:
-    size = 159
-else:
-    size = 176
+    if any_bottleneck:
+        size = 159
+    else:
+        size = 176
 
-file = options["file1"].split(".darshan")[0]
-command = f"drishti --html --light --size {size} --export_dir {os.path.dirname(file)} --json {json_file_path} {file}.darshan"
-args = shlex.split(command)
-s = subprocess.Popen(args, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-sOutput, sError = s.communicate()
+    file = options["file0"]
+    drishti_file = options["file1"].split(".dxt")[0]
 
-if s.returncode == 0:
-    with open(file + ".drishti", "w", encoding="utf-8") as drishti_output:
-        drishti_output.write(sOutput.decode("utf-8"))
+    command = f"drishti --html --light --size {size} --export_dir {os.path.dirname(file)} --json {json_file_path} {file}.darshan"
 
-    output_doc = BeautifulSoup("<html><head></head><body></body></html>", "html.parser")
+    s = None
 
-    meta_tag = output_doc.new_tag("meta", charset="utf-8")
-    output_doc.head.append(meta_tag)
+    if not os.path.exists(drishti_file + '.html'):
+        args = shlex.split(command)
+        s = subprocess.Popen(args, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+        sOutput, sError = s.communicate()
 
-    append_content(output_doc.body, options["output"], "body")
-    append_content(output_doc.head, file + ".html", "head")
-    append_content(output_doc.body, file + ".html", "body")
+    if s is None or s.returncode == 0:
+        with open(file + ".drishti", "w", encoding="utf-8") as drishti_output:
+            drishti_output.write(sOutput.decode("utf-8"))
 
-    style_tag = output_doc.new_tag("style")
-    style_tag.string = "pre { padding-left: 60px;}"
-    output_doc.head.append(style_tag)
+        output_doc = BeautifulSoup("<html><head></head><body></body></html>", "html.parser")
 
-    with open(options["output"], "wb") as output_file:
-        output_file.write(output_doc.encode("utf-8"))
-else:
-    sys.exit(os.EX_SOFTWARE)
+        meta_tag = output_doc.new_tag("meta", charset="utf-8")
+        output_doc.head.append(meta_tag)
+
+        append_content(output_doc.body, options["output"], "body")
+        append_content(output_doc.head, file + ".html", "head")
+        append_content(output_doc.body, file + ".html", "body")
+
+        style_tag = output_doc.new_tag("style")
+        style_tag.string = "pre { padding-left: 60px;}"
+        output_doc.head.append(style_tag)
+
+        with open(options["output"], "wb") as output_file:
+            output_file.write(output_doc.encode("utf-8"))
+    else:
+        sys.exit(os.EX_SOFTWARE)
